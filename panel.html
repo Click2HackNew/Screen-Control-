@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Control Panel</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background-color: #1e1e1e; color: #e0e0e0; margin: 0; display: flex; height: 100vh; }
+        .sidebar { width: 300px; background-color: #252526; border-right: 1px solid #333; display: flex; flex-direction: column; }
+        .sidebar h2 { text-align: center; padding: 15px; margin: 0; background-color: #333; font-size: 1.2em; }
+        #device-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; }
+        .device { padding: 15px 20px; border-bottom: 1px solid #333; cursor: pointer; transition: background-color 0.2s; }
+        .device.active, .device:hover { background-color: #3f3f46; }
+        .device-name { font-weight: bold; }
+        .device-info { font-size: 0.8em; color: #999; }
+        .main-content { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        #screen-wrapper { transform: scale(1); transition: transform 0.2s; }
+        #screen-container {
+            border: 8px solid #444;
+            border-radius: 20px;
+            background-color: #000;
+            position: relative;
+            width: 360px;
+            height: 740px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .screen-element {
+            position: absolute;
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            background-color: rgba(0, 139, 139, 0.2);
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .screen-element:hover { background-color: rgba(0, 255, 255, 0.4); }
+        .element-text {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7);
+            font-size: 10px;
+            padding: 1px 3px;
+            border-radius: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>Connected Devices</h2>
+        <ul id="device-list">
+            <!-- डिवाइस यहाँ जोड़े जाएंगे -->
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div id="screen-wrapper">
+            <div id="screen-container">
+                <!-- स्क्रीन के तत्व यहाँ ड्रॉ होंगे -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const deviceListEl = document.getElementById('device-list');
+        const screenContainer = document.getElementById('screen-container');
+        
+        let devices = {};
+        let activeDeviceId = null;
+
+        // --- सर्वर से कनेक्शन ---
+        socket.on('connect', () => {
+            console.log('सर्वर से कनेक्ट हो गया!');
+            socket.emit('admin_join');
+        });
+
+        // --- डिवाइस सूची को मैनेज करना ---
+        socket.on('device_list', (initialDevices) => {
+            deviceListEl.innerHTML = '';
+            devices = {};
+            initialDevices.forEach(addDeviceToList);
+        });
+
+        socket.on('new_device_joined', (device) => {
+            addDeviceToList(device);
+        });
+
+        socket.on('device_disconnected', (deviceId) => {
+            const deviceEl = document.getElementById(`device-${deviceId}`);
+            if (deviceEl) {
+                deviceEl.remove();
+            }
+            delete devices[deviceId];
+            if (activeDeviceId === deviceId) {
+                screenContainer.innerHTML = '';
+                activeDeviceId = null;
+            }
+        });
+
+        function addDeviceToList(device) {
+            if (devices[device.deviceId]) return; // अगर पहले से है तो कुछ न करें
+            devices[device.deviceId] = device;
+            
+            const listItem = document.createElement('li');
+            listItem.className = 'device';
+            listItem.id = `device-${device.deviceId}`;
+            listItem.innerHTML = `
+                <div class="device-name">${device.deviceName}</div>
+                <div class="device-info">ID: ${device.deviceId} | Battery: ${device.battery}%</div>
+            `;
+            listItem.addEventListener('click', () => {
+                if (activeDeviceId) {
+                    document.getElementById(`device-${activeDeviceId}`).classList.remove('active');
+                }
+                activeDeviceId = device.deviceId;
+                listItem.classList.add('active');
+                screenContainer.innerHTML = 'Waiting for screen data...';
+            });
+            deviceListEl.appendChild(listItem);
+        }
+
+        // --- स्क्रीन अपडेट को हैंडल करना ---
+        socket.on('screen_update', (data) => {
+            // केवल सक्रिय डिवाइस के लिए स्क्रीन अपडेट करें
+            if (data.deviceId !== activeDeviceId) return;
+
+            screenContainer.innerHTML = ''; // पुरानी स्क्रीन को साफ़ करें
+            data.elements.forEach(element => {
+                const el = document.createElement('div');
+                el.className = 'screen-element';
+                el.style.left = `${element.x}px`;
+                el.style.top = `${element.y}px`;
+                el.style.width = `${element.width}px`;
+                el.style.height = `${element.height}px`;
+
+                if (element.text) {
+                    const textEl = document.createElement('div');
+                    textEl.className = 'element-text';
+                    textEl.textContent = element.text;
+                    el.appendChild(textEl);
+                }
+
+                // क्लिक करने पर कमांड भेजें
+                el.addEventListener('click', () => {
+                    const tapX = element.x + (element.width / 2);
+                    const tapY = element.y + (element.height / 2);
+                    
+                    console.log(`Tapping on ${activeDeviceId} at (${tapX}, ${tapY})`);
+                    
+                    socket.emit('command_to_device', {
+                        deviceId: activeDeviceId,
+                        action: 'touch_command',
+                        payload: { x: tapX, y: tapY }
+                    });
+                });
+
+                screenContainer.appendChild(el);
+            });
+        });
+
+    </script>
+</body>
+</html>
