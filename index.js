@@ -41,9 +41,8 @@ io.on('connection', (socket) => {
         io.emit('screen_update', data);
     });
     
-    // NEW: Handle UI screenshot from device
-    socket.on('ui_screenshot', (data) => {
-        io.emit('ui_screenshot_update', data);
+    socket.on('live_screen', (data) => {
+        io.emit('live_screen', data);
     });
 
     socket.on('heartbeat', (data) => {
