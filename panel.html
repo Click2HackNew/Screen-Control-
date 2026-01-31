@@ -442,9 +442,17 @@
             z-index: 1000;
         }
         
-        /* COLOR CORRECTION */
-        .color-correct {
-            filter: brightness(1.2) contrast(1.1) saturate(1.3);
+        /* TEST CLICK MODE */
+        .test-click-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px dashed red;
+            padding: 20px;
+            display: none;
+            z-index: 1000;
         }
     </style>
 </head>
@@ -462,7 +470,7 @@
             <div class="lock-info" id="lock-status">Lock: Unknown</div>
             <div class="screen-toggle-buttons">
                 <button id="btn-live-screen" class="screen-toggle-btn active">📱 LIVE SCREEN</button>
-                <button id="btn-debug-mode" class="screen-toggle-btn">🐛 DEBUG</button>
+                <button id="btn-test-click" class="screen-toggle-btn" style="background: #ff9900;">🎯 TEST CLICK</button>
             </div>
             <div class="status-indicator">
                 <div id="live-indicator" class="live-indicator"></div>
@@ -479,12 +487,22 @@
             <div class="screen-area">
                 <div id="live-screen-viewport" class="screen-viewport" style="display: block;">
                     <div class="image-container">
-                        <img id="live-screen-image" class="live-screen-image color-correct" src="" alt="Live Screen" />
+                        <img id="live-screen-image" class="live-screen-image" src="" alt="Live Screen" />
                         <div class="click-overlay">
                             <div id="click-marker" class="click-marker"></div>
                         </div>
                         <div id="coords-display" class="coords-display">Click: x=0, y=0</div>
                         <div id="debug-info" class="debug-info">Debug Info</div>
+                        <div id="test-click-area" class="test-click-area">
+                            <h3>🎯 Test Click Mode</h3>
+                            <p>Click on the colored squares below to test</p>
+                            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                <div class="test-btn" data-x="100" data-y="200" style="background: red; padding: 10px; cursor: pointer;">Red Button</div>
+                                <div class="test-btn" data-x="300" data-y="200" style="background: blue; padding: 10px; cursor: pointer;">Blue Button</div>
+                                <div class="test-btn" data-x="500" data-y="200" style="background: green; padding: 10px; cursor: pointer;">Green Button</div>
+                            </div>
+                            <button onclick="document.getElementById('test-click-area').style.display='none'" style="margin-top: 10px;">Close Test</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -502,14 +520,14 @@
                 <div class="divider"></div>
                 <button class="control-button" id="btn-start-stream">▶️</button>
                 <button class="control-button" id="btn-stop-stream">⏸️</button>
-                <button class="control-button" id="btn-enhance-color" style="background: #ff00ff;">🎨</button>
+                <button class="control-button" id="btn-calibrate-click" style="background: #ff4444;">🎯</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // ENHANCED SOCKET CONNECTION WITH STABILITY
+        // ENHANCED SOCKET CONNECTION
         const socket = io({
             reconnection: true,
             reconnectionAttempts: Infinity,
@@ -531,7 +549,7 @@
             lockStatus: document.getElementById('lock-status'),
             backToListBtn: document.getElementById('back-to-list-btn'),
             liveScreenBtn: document.getElementById('btn-live-screen'),
-            debugModeBtn: document.getElementById('btn-debug-mode'),
+            testClickBtn: document.getElementById('btn-test-click'),
             liveScreenViewport: document.getElementById('live-screen-viewport'),
             liveScreenImage: document.getElementById('live-screen-image'),
             connectionDot: document.getElementById('connection-dot'),
@@ -542,10 +560,11 @@
             clickMarker: document.getElementById('click-marker'),
             coordsDisplay: document.getElementById('coords-display'),
             debugInfo: document.getElementById('debug-info'),
-            enhanceColorBtn: document.getElementById('btn-enhance-color')
+            testClickArea: document.getElementById('test-click-area'),
+            calibrateClickBtn: document.getElementById('btn-calibrate-click')
         };
 
-        // ENHANCED STATE MANAGEMENT
+        // STATE MANAGEMENT
         let state = {
             devices: {},
             activeDeviceId: null,
@@ -560,15 +579,27 @@
             clickHistory: [],
             debugMode: false,
             colorEnhancement: true,
-            currentImageData: null
+            currentImageData: null,
+            calibrationOffset: { x: 0, y: 0 },
+            scaleFactor: 1.0
         };
 
-        // FIX 1: IMPROVED CLICK HANDLING
+        // ENHANCED CLICK HANDLER WITH CALIBRATION
         function setupClickHandler() {
             UIElements.liveScreenImage.addEventListener('click', handleScreenClick);
-            UIElements.liveScreenImage.addEventListener('mousemove', handleMouseMove);
+            UIElements.liveScreenImage.addEventListener('contextmenu', handleRightClick);
             
-            console.log('🖱️ Click handler setup complete');
+            // Test click buttons
+            document.querySelectorAll('.test-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const x = parseInt(this.getAttribute('data-x'));
+                    const y = parseInt(this.getAttribute('data-y'));
+                    sendClickCommand(x, y, 'test-click');
+                });
+            });
+            
+            console.log('🎯 Click handler setup with calibration');
         }
 
         function handleScreenClick(e) {
@@ -580,23 +611,21 @@
             const rect = e.target.getBoundingClientRect();
             const imageElement = e.target;
             
-            // Get actual image dimensions (considering object-fit: contain)
-            let imageWidth, imageHeight;
-            let offsetX = 0, offsetY = 0;
-            
-            // Calculate actual displayed image dimensions
+            // Get actual displayed image dimensions
             const containerWidth = rect.width;
             const containerHeight = rect.height;
             const imageAspectRatio = imageElement.naturalWidth / imageElement.naturalHeight;
             const containerAspectRatio = containerWidth / containerHeight;
             
+            let imageWidth, imageHeight, offsetX = 0, offsetY = 0;
+            
             if (containerAspectRatio > imageAspectRatio) {
-                // Image is constrained by height
+                // Image is height-constrained
                 imageHeight = containerHeight;
                 imageWidth = imageHeight * imageAspectRatio;
                 offsetX = (containerWidth - imageWidth) / 2;
             } else {
-                // Image is constrained by width
+                // Image is width-constrained
                 imageWidth = containerWidth;
                 imageHeight = imageWidth / imageAspectRatio;
                 offsetY = (containerHeight - imageHeight) / 2;
@@ -606,139 +635,120 @@
             const clickX = e.clientX - rect.left - offsetX;
             const clickY = e.clientY - rect.top - offsetY;
             
-            // Scale to original image coordinates
-            const scaleX = imageElement.naturalWidth / imageWidth;
-            const scaleY = imageElement.naturalHeight / imageHeight;
-            
-            const originalX = Math.round(clickX * scaleX);
-            const originalY = Math.round(clickY * scaleY);
-            
-            // Validate coordinates
-            if (originalX < 0 || originalY < 0 || 
-                originalX > imageElement.naturalWidth || 
-                originalY > imageElement.naturalHeight) {
+            // Check if click is within image bounds
+            if (clickX < 0 || clickY < 0 || clickX > imageWidth || clickY > imageHeight) {
                 console.warn('Click outside image area');
                 return;
             }
             
-            // Show click marker for debugging
-            if (state.debugMode) {
-                UIElements.clickMarker.style.left = `${clickX + offsetX}px`;
-                UIElements.clickMarker.style.top = `${clickY + offsetY}px`;
-                UIElements.clickMarker.style.display = 'block';
-                
-                setTimeout(() => {
-                    UIElements.clickMarker.style.display = 'none';
-                }, 1000);
+            // Scale to original image coordinates
+            const scaleX = imageElement.naturalWidth / imageWidth;
+            const scaleY = imageElement.naturalHeight / imageHeight;
+            
+            // Apply calibration offset
+            const calibratedX = Math.round((clickX * scaleX) + state.calibrationOffset.x);
+            const calibratedY = Math.round((clickY * scaleY) + state.calibrationOffset.y);
+            
+            // Clamp to screen bounds
+            const finalX = Math.max(0, Math.min(calibratedX, imageElement.naturalWidth - 1));
+            const finalY = Math.max(0, Math.min(calibratedY, imageElement.naturalHeight - 1));
+            
+            // Show visual feedback
+            showClickFeedback(clickX + offsetX, clickY + offsetY, finalX, finalY);
+            
+            // Send click command
+            sendClickCommand(finalX, finalY, 'screen-click');
+        }
+
+        function handleRightClick(e) {
+            e.preventDefault();
+            if (!state.isLiveStreaming) return;
+            
+            const rect = e.target.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Calibration mode - set offset
+            state.calibrationOffset.x += 10;
+            state.calibrationOffset.y += 10;
+            
+            UIElements.debugInfo.innerHTML = `
+                🔧 Calibration Adjusted<br>
+                Offset: +${state.calibrationOffset.x}, +${state.calibrationOffset.y}<br>
+                Click at: ${Math.round(clickX)}, ${Math.round(clickY)}
+            `;
+            UIElements.debugInfo.style.display = 'block';
+            
+            setTimeout(() => {
+                UIElements.debugInfo.style.display = 'none';
+            }, 3000);
+            
+            console.log(`🔧 Calibration offset: ${state.calibrationOffset.x}, ${state.calibrationOffset.y}`);
+        }
+
+        function sendClickCommand(x, y, type = 'touch') {
+            console.log(`🎯 Sending ${type}: x=${x}, y=${y}`);
+            
+            sendCommand('touch_command', { 
+                x: x, 
+                y: y,
+                type: type,
+                timestamp: Date.now(),
+                calibration: state.calibrationOffset
+            });
+            
+            // Store in history
+            state.clickHistory.push({
+                x: x,
+                y: y,
+                type: type,
+                timestamp: Date.now(),
+                success: null
+            });
+            
+            // Keep only recent history
+            if (state.clickHistory.length > 20) {
+                state.clickHistory.shift();
             }
+        }
+
+        function showClickFeedback(screenX, screenY, originalX, originalY) {
+            // Show marker
+            UIElements.clickMarker.style.left = `${screenX}px`;
+            UIElements.clickMarker.style.top = `${screenY}px`;
+            UIElements.clickMarker.style.display = 'block';
             
             // Update coordinates display
             UIElements.coordsDisplay.textContent = `Click: x=${originalX}, y=${originalY}`;
             UIElements.coordsDisplay.style.display = 'block';
             
-            // Store in history
-            state.clickHistory.push({
-                x: originalX,
-                y: originalY,
-                timestamp: Date.now(),
-                screenWidth: imageElement.naturalWidth,
-                screenHeight: imageElement.naturalHeight
-            });
-            
-            // Keep only last 10 clicks
-            if (state.clickHistory.length > 10) {
-                state.clickHistory.shift();
-            }
-            
-            console.log(`🎯 Click at: ${originalX}, ${originalY} (scaled from: ${clickX}, ${clickY})`);
-            console.log(`📏 Image: ${imageElement.naturalWidth}x${imageElement.naturalHeight}, Display: ${imageWidth.toFixed(0)}x${imageHeight.toFixed(0)}`);
-            
-            // Send click command
-            sendCommand('touch_command', { 
-                x: originalX, 
-                y: originalY,
-                displayX: Math.round(clickX),
-                displayY: Math.round(clickY)
-            });
+            // Auto-hide
+            setTimeout(() => {
+                UIElements.clickMarker.style.display = 'none';
+                setTimeout(() => {
+                    UIElements.coordsDisplay.style.display = 'none';
+                }, 2000);
+            }, 1000);
         }
 
-        function handleMouseMove(e) {
-            if (!state.debugMode) return;
+        function calibrateClick() {
+            // Reset calibration
+            state.calibrationOffset = { x: 0, y: 0 };
             
-            const rect = e.target.getBoundingClientRect();
-            const imageElement = e.target;
+            // Show test area
+            UIElements.testClickArea.style.display = 'block';
             
-            // Calculate coordinates (similar to click)
-            const containerWidth = rect.width;
-            const containerHeight = rect.height;
-            const imageAspectRatio = imageElement.naturalWidth / imageElement.naturalHeight;
-            const containerAspectRatio = containerWidth / containerHeight;
-            
-            let imageWidth, imageHeight, offsetX = 0, offsetY = 0;
-            
-            if (containerAspectRatio > imageAspectRatio) {
-                imageHeight = containerHeight;
-                imageWidth = imageHeight * imageAspectRatio;
-                offsetX = (containerWidth - imageWidth) / 2;
-            } else {
-                imageWidth = containerWidth;
-                imageHeight = imageWidth / imageAspectRatio;
-                offsetY = (containerHeight - imageHeight) / 2;
-            }
-            
-            const mouseX = e.clientX - rect.left - offsetX;
-            const mouseY = e.clientY - rect.top - offsetY;
-            
-            const scaleX = imageElement.naturalWidth / imageWidth;
-            const scaleY = imageElement.naturalHeight / imageHeight;
-            
-            const originalX = Math.round(mouseX * scaleX);
-            const originalY = Math.round(mouseY * scaleY);
-            
-            // Update debug info
-            if (state.debugMode) {
-                UIElements.debugInfo.innerHTML = `
-                    Mouse: ${Math.round(mouseX)}, ${Math.round(mouseY)}<br>
-                    Original: ${originalX}, ${originalY}<br>
-                    Image: ${imageElement.naturalWidth}x${imageElement.naturalHeight}<br>
-                    Display: ${Math.round(imageWidth)}x${Math.round(imageHeight)}<br>
-                    Scale: ${scaleX.toFixed(2)}x${scaleY.toFixed(2)}
-                `;
-                UIElements.debugInfo.style.display = 'block';
-            }
-        }
-
-        // FIX 2: COLOR ENHANCEMENT
-        function enhanceImageColors() {
-            if (!state.colorEnhancement) return;
-            
-            UIElements.liveScreenImage.classList.add('color-correct');
-            
-            // Apply additional CSS filters for better colors
-            UIElements.liveScreenImage.style.filter = `
-                brightness(${state.debugMode ? '1.3' : '1.15'}) 
-                contrast(${state.debugMode ? '1.2' : '1.1'}) 
-                saturate(${state.debugMode ? '1.4' : '1.3'})
-                hue-rotate(${state.debugMode ? '5deg' : '0deg'})
+            UIElements.debugInfo.innerHTML = `
+                🎯 Calibration Mode Active<br>
+                Click the test buttons or screen<br>
+                Right-click to adjust offset
             `;
-        }
-
-        function toggleColorEnhancement() {
-            state.colorEnhancement = !state.colorEnhancement;
+            UIElements.debugInfo.style.display = 'block';
             
-            if (state.colorEnhancement) {
-                enhanceImageColors();
-                UIElements.enhanceColorBtn.style.background = '#ff00ff';
-                UIElements.enhanceColorBtn.innerHTML = '🎨 ON';
-            } else {
-                UIElements.liveScreenImage.classList.remove('color-correct');
-                UIElements.liveScreenImage.style.filter = 'none';
-                UIElements.enhanceColorBtn.style.background = '#3f3f46';
-                UIElements.enhanceColorBtn.innerHTML = '🎨 OFF';
-            }
+            console.log('🔧 Entering calibration mode');
         }
 
-        // CONNECTION FUNCTIONS
+        // SOCKET FUNCTIONS
         function sendCommand(action, payload = {}) {
             if (!state.activeDeviceId) {
                 console.warn('No active device selected');
@@ -778,19 +788,12 @@
             UIElements.streamStatus.textContent = 'Stream: ON';
             UIElements.streamStatus.style.color = '#44ff44';
             
-            // Setup click handler when stream starts
-            setTimeout(setupClickHandler, 1000);
+            // Setup click handler when image loads
+            UIElements.liveScreenImage.onload = function() {
+                console.log('🖼️ Image loaded, click handler ready');
+            };
             
             clearTimeout(state.retryTimeout);
-            state.retryTimeout = setTimeout(() => {
-                if (state.isLiveStreaming && state.devices[state.activeDeviceId]) {
-                    const lastSeen = state.devices[state.activeDeviceId].lastSeen || 0;
-                    if (Date.now() - lastSeen > 10000) {
-                        console.log('🔄 Auto-restarting stream');
-                        startLiveStream();
-                    }
-                }
-            }, 15000);
         }
 
         function stopLiveStream() {
@@ -835,11 +838,11 @@
                         
                         showView('control-view');
                         
-                        // Auto-start live stream with color enhancement
+                        // Auto-start live stream
                         setTimeout(() => {
                             startLiveStream();
-                            enhanceImageColors();
-                        }, 500);
+                            setupClickHandler();
+                        }, 1000);
                     } else {
                         alert('⚠️ Device is currently offline. Please wait for it to reconnect.');
                     }
@@ -884,6 +887,7 @@
                 state.activeDeviceId = null;
                 UIElements.coordsDisplay.style.display = 'none';
                 UIElements.debugInfo.style.display = 'none';
+                UIElements.testClickArea.style.display = 'none';
             }
         }
 
@@ -990,28 +994,27 @@
             if (data.screenWidth && data.screenHeight) {
                 state.screenDimensions.width = data.screenWidth;
                 state.screenDimensions.height = data.screenHeight;
+                
+                // Calculate scale factor for display
+                const img = UIElements.liveScreenImage;
+                if (img.naturalWidth > 0) {
+                    state.scaleFactor = data.screenWidth / img.naturalWidth;
+                }
             }
             
-            // Update screen image with color enhancement
+            // Update screen image
             UIElements.liveScreenImage.src = `data:image/jpeg;base64,${data.liveImage}`;
-            
-            // Apply color enhancement
-            enhanceImageColors();
             
             // Update alt text with dimensions
             UIElements.liveScreenImage.alt = `Live Screen - ${state.screenDimensions.width}x${state.screenDimensions.height}`;
             
-            // Store image data for debugging
+            // Store image data
             state.currentImageData = data;
             
-            // Update debug info if in debug mode
-            if (state.debugMode) {
-                UIElements.debugInfo.innerHTML = `
-                    📱 Device: ${data.deviceId}<br>
-                    📏 Screen: ${state.screenDimensions.width}x${state.screenDimensions.height}<br>
-                    🕐 Received: ${new Date().toLocaleTimeString()}<br>
-                    🔄 Clicks: ${state.clickHistory.length}
-                `;
+            // Setup click handler if not already done
+            if (!state.clickHandlerSetup) {
+                setupClickHandler();
+                state.clickHandlerSetup = true;
             }
         });
 
@@ -1029,31 +1032,11 @@
             }
         };
 
-        UIElements.debugModeBtn.onclick = () => {
-            state.debugMode = !state.debugMode;
-            
-            if (state.debugMode) {
-                UIElements.debugModeBtn.classList.add('active');
-                UIElements.debugModeBtn.innerHTML = '🐛 DEBUG ON';
-                UIElements.debugInfo.style.display = 'block';
-                UIElements.coordsDisplay.style.display = 'block';
-                UIElements.clickMarker.style.display = 'block';
-                
-                // Enhance colors more in debug mode
-                UIElements.liveScreenImage.style.filter = 'brightness(1.3) contrast(1.2) saturate(1.4) hue-rotate(5deg)';
-            } else {
-                UIElements.debugModeBtn.classList.remove('active');
-                UIElements.debugModeBtn.innerHTML = '🐛 DEBUG OFF';
-                UIElements.debugInfo.style.display = 'none';
-                UIElements.coordsDisplay.style.display = 'none';
-                UIElements.clickMarker.style.display = 'none';
-                
-                // Restore normal color enhancement
-                enhanceImageColors();
-            }
+        UIElements.testClickBtn.onclick = () => {
+            calibrateClick();
         };
 
-        UIElements.enhanceColorBtn.onclick = toggleColorEnhancement;
+        UIElements.calibrateClickBtn.onclick = calibrateClick;
 
         // CONTROL BUTTONS
         document.getElementById('btn-start-stream').onclick = startLiveStream;
@@ -1088,9 +1071,6 @@
         if (!socket.connected) {
             socket.connect();
         }
-
-        // Setup initial click handler
-        setupClickHandler();
 
     </script>
 </body>
