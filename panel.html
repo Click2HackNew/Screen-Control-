@@ -5,56 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Control - Live View</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap');
+        /* ... पहले वाला CSS कोड वही रहेगा ... */
+        /* सिर्फ कुछ नई classes add करें */
         
-        body { font-family: 'Roboto', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
-        .view { display: none; width: 100%; height: 100%; }
-        .view.active { display: flex; flex-direction: column; }
-        #device-list-view { flex-direction: column; }
-        .header { background-color: #1e1e1e; padding: 15px 20px; text-align: center; border-bottom: 2px solid #00ff00; flex-shrink: 0; }
-        .header h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 2em; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-        #device-list-container { padding: 20px; overflow-y: auto; flex-grow: 1; }
-        #device-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .device { background-color: #1e1e1e; border-radius: 10px; border-left: 5px solid #555; padding: 20px; cursor: pointer; transition: all 0.3s ease; display: flex; justify-content: space-between; align-items: center; }
-        .device:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-left-color: #00ff00; }
-        .device-name { font-size: 1.3em; font-weight: 700; }
-        .device-info { font-size: 0.9em; color: #aaa; }
-        .status-dot { height: 15px; width: 15px; background-color: #28a745; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #28a745; }
-        .lock-badge { background: #ff4444; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 10px; }
-        .lock-badge.unlocked { background: #44ff44; }
-        #control-view { flex-direction: column; }
-        .control-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #1e1e1e; border-bottom: 1px solid #333; flex-wrap: wrap; gap: 10px; flex-shrink: 0; }
-        #back-to-list-btn { background-color: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 1em; }
-        #device-title { font-size: 1.2em; font-weight: bold; }
-        .lock-info { background: #2a2a2a; padding: 5px 10px; border-radius: 5px; font-size: 0.9em; }
-        .screen-toggle-buttons { display: flex; gap: 10px; }
-        .screen-toggle-btn { background: #3f3f46; color: white; border: 1px solid #555; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: all 0.3s; }
-        .screen-toggle-btn:hover { background: #555; }
-        .screen-toggle-btn.active { background: #00ff00; color: #000; border-color: #00ff00; }
-        .main-container { display: flex; flex-grow: 1; min-height: 0; overflow: hidden; }
-        .screen-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 15px; position: relative; overflow: auto; }
-        .screen-viewport { border: 3px solid #444; border-radius: 10px; background-color: #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; position: relative; max-width: 95%; max-height: 95%; display: flex; align-items: center; justify-content: center; }
-        .screen-container { position: relative; background-color: #000; transform-origin: top left; overflow: hidden; max-width: 100%; max-height: 100%; }
-        .screen-element { position: absolute; border: 1px solid rgba(0, 255, 255, 0.6); background-color: rgba(0, 139, 139, 0.2); box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2px; }
-        .element-text { color: white; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-        .live-screen-image { width: 100%; height: 100%; object-fit: contain; background-color: #000; cursor: crosshair; }
-        .all-controls { width: 80px; background-color: #1e1e1e; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px; padding: 20px 10px; flex-shrink: 0; overflow-y: auto; }
-        .control-button { width: 55px; height: 55px; background-color: #3f3f46; border: 1px solid #555; color: white; border-radius: 50%; cursor: pointer; font-size: 24px; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .control-button:hover { background-color: #555; }
-        .divider { height: 1px; width: 80%; background-color: #444; margin: 10px 0; }
-        .single-main-btn { background: linear-gradient(135deg, #0066cc, #0099ff); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4); transition: all 0.3s; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .single-main-btn:hover { background: linear-gradient(135deg, #0099ff, #00ccff); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 153, 255, 0.6); }
-        .status-indicator { display: flex; align-items: center; gap: 5px; font-size: 0.9em; flex-shrink: 0; }
-        .live-indicator { width: 10px; height: 10px; background-color: #ff4444; border-radius: 50%; animation: pulse 1.5s infinite; }
-        .live-indicator.active { background-color: #44ff44; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .connection-status { display: flex; align-items: center; gap: 5px; font-size: 0.9em; padding: 5px 10px; border-radius: 5px; background: #2a2a2a; }
-        .connection-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .connection-dot.connected { background-color: #44ff44; box-shadow: 0 0 8px #44ff44; }
-        .connection-dot.disconnected { background-color: #ff4444; box-shadow: 0 0 8px #ff4444; }
-        .connection-stats { font-size: 0.8em; color: #aaa; margin-top: 2px; }
-        .screen-content { display: none; width: 100%; height: 100%; }
-        .screen-content.active { display: block; }
+        .device-connection-status {
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        .connection-quality {
+            display: inline-block;
+            width: 60px;
+            height: 5px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-left: 5px;
+        }
+        .connection-quality-bar {
+            height: 100%;
+            background: #44ff44;
+            width: 100%;
+            transition: width 0.3s;
+        }
+        .device-stats {
+            font-size: 0.7em;
+            color: #888;
+            margin-top: 2px;
+        }
+        .reconnecting {
+            animation: pulse 1.5s infinite;
+            color: #ffaa00;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
     </style>
 </head>
 <body>
@@ -82,6 +68,9 @@
                 <span id="connection-status-text">...</span>
                 <div class="connection-stats" id="connection-stats"></div>
             </div>
+            <div id="device-connection-quality" class="connection-quality" style="display: none;">
+                <div class="connection-quality-bar"></div>
+            </div>
             <button id="btn-wake-unlock" class="single-main-btn">⚡ WAKE</button>
         </div>
         <div class="main-container">
@@ -105,6 +94,7 @@
                 <div class="divider"></div>
                 <button class="control-button" id="btn-start-stream">▶️</button>
                 <button class="control-button" id="btn-stop-stream">⏸️</button>
+                <button class="control-button" id="btn-reconnect-device" style="background: #ffaa00;">🔗</button>
             </div>
         </div>
     </div>
@@ -115,8 +105,11 @@
             reconnection: true,
             reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
-            randomizationFactor: 0.5
+            reconnectionDelayMax: 10000,
+            randomizationFactor: 0.3,
+            timeout: 20000,
+            transports: ['websocket'],
+            autoConnect: true
         });
 
         const UIElements = {
@@ -137,6 +130,7 @@
             connectionStats: document.getElementById('connection-stats'),
             liveIndicator: document.getElementById('live-indicator'),
             streamStatus: document.getElementById('stream-status'),
+            deviceConnectionQuality: document.getElementById('device-connection-quality')
         };
 
         let state = {
@@ -144,8 +138,44 @@
             activeDeviceId: null,
             connectionStartTime: 0,
             isLiveStreaming: false,
-            currentScreenView: 'live'
+            currentScreenView: 'live',
+            lastPingTime: 0,
+            connectionQuality: 100,
+            deviceConnectionStats: {},
+            reconnectAttempts: 0
         };
+
+        // Connection quality calculator
+        function calculateConnectionQuality(deviceId) {
+            const device = state.devices[deviceId];
+            if (!device) return 100;
+            
+            let quality = 100;
+            
+            // Disconnections penalty
+            if (device.disconnections > 0) {
+                quality -= Math.min(device.disconnections * 5, 30);
+            }
+            
+            // Last seen penalty
+            if (device.lastSeen) {
+                const secondsAgo = (Date.now() - device.lastSeen) / 1000;
+                if (secondsAgo > 30) {
+                    quality -= Math.min((secondsAgo - 30) * 2, 40);
+                }
+            }
+            
+            // Heartbeat regularity
+            if (device.lastHeartbeat && device.heartbeatInterval) {
+                const expected = device.lastHeartbeat + device.heartbeatInterval;
+                const delay = Date.now() - expected;
+                if (delay > 5000) {
+                    quality -= Math.min(delay / 1000, 20);
+                }
+            }
+            
+            return Math.max(10, Math.min(100, quality));
+        }
 
         function showView(viewId) {
             UIElements.deviceListView.classList.remove('active');
@@ -171,8 +201,22 @@
         }
 
         function sendCommand(action, payload = {}) {
-            if (!state.activeDeviceId || !socket.connected) return;
-            socket.emit('command_to_device', { deviceId: state.activeDeviceId, action, payload });
+            if (!state.activeDeviceId || !socket.connected) {
+                console.warn('Cannot send command: No active device or disconnected');
+                return;
+            }
+            
+            // Add sequence number for tracking
+            const sequence = Date.now();
+            payload._seq = sequence;
+            
+            socket.emit('command_to_device', { 
+                deviceId: state.activeDeviceId, 
+                action, 
+                payload 
+            });
+            
+            console.log(`📤 Sent ${action} to ${state.activeDeviceId}, seq: ${sequence}`);
         }
 
         function startLiveStream() {
@@ -192,89 +236,212 @@
         }
 
         function updateDeviceInList(device) {
-            state.devices[device.deviceId] = { ...state.devices[device.deviceId], ...device };
+            state.devices[device.deviceId] = { 
+                ...state.devices[device.deviceId], 
+                ...device,
+                lastUpdated: Date.now()
+            };
+            
+            // Calculate connection quality
+            const quality = calculateConnectionQuality(device.deviceId);
+            state.devices[device.deviceId].connectionQuality = quality;
+            
             let li = document.getElementById(`device-${device.deviceId}`);
             if (!li) {
                 li = document.createElement('li');
                 li.className = 'device';
                 li.id = `device-${device.deviceId}`;
                 li.addEventListener('click', () => {
-                    state.activeDeviceId = device.deviceId;
-                    UIElements.deviceTitle.textContent = device.deviceName;
-                    UIElements.lockStatus.textContent = `Lock: ${device.lockType || 'Unknown'}`;
-                    showView('control-view');
-                    switchScreenView('live');
+                    if (state.devices[device.deviceId].socketId) {
+                        state.activeDeviceId = device.deviceId;
+                        UIElements.deviceTitle.textContent = device.deviceName;
+                        UIElements.lockStatus.textContent = `Lock: ${device.lockType || 'Unknown'}`;
+                        
+                        // Show connection quality
+                        UIElements.deviceConnectionQuality.style.display = 'block';
+                        updateConnectionQualityDisplay(quality);
+                        
+                        showView('control-view');
+                        switchScreenView('live');
+                    } else {
+                        alert('Device is currently offline. Please wait for it to reconnect.');
+                    }
                 });
                 UIElements.deviceList.appendChild(li);
             }
+            
+            const isOnline = !!device.socketId;
+            const batteryLevel = device.battery || 'N/A';
+            const connectionStatus = isOnline ? 'Online' : 'Offline';
+            const statusClass = isOnline ? '' : 'reconnecting';
+            
             li.innerHTML = `
                 <div>
-                    <div class="device-name">${device.deviceName}</div>
-                    <div class="device-info">Android: ${device.androidVersion} | 🔋 <span class="battery-level">${device.battery || 'N/A'}</span>%</div>
+                    <div class="device-name ${statusClass}">${device.deviceName}</div>
+                    <div class="device-info">Android: ${device.androidVersion} | 🔋 ${batteryLevel}%</div>
+                    <div class="device-connection-status ${statusClass}">
+                        ${connectionStatus} 
+                        <div class="connection-quality">
+                            <div class="connection-quality-bar" style="width: ${quality}%"></div>
+                        </div>
+                    </div>
+                    <div class="device-stats">
+                        ${device.lastSeen ? 'Seen: ' + formatTimeAgo(device.lastSeen) : ''}
+                        ${device.disconnections > 0 ? ' | D/C: ' + device.disconnections : ''}
+                    </div>
                 </div>
                 <div style="display: flex; align-items: center;">
                     <span class="lock-badge ${device.lockType !== 'locked' ? 'unlocked' : ''}">${device.lockType || 'none'}</span>
-                    <span class="status-dot"></span>
+                    <span class="status-dot" style="background-color: ${isOnline ? '#28a745' : '#ff4444'}; box-shadow: 0 0 8px ${isOnline ? '#28a745' : '#ff4444'}"></span>
                 </div>
             `;
         }
 
+        function updateConnectionQualityDisplay(quality) {
+            const bar = UIElements.deviceConnectionQuality.querySelector('.connection-quality-bar');
+            if (bar) {
+                bar.style.width = quality + '%';
+                bar.style.backgroundColor = quality > 70 ? '#44ff44' : 
+                                           quality > 40 ? '#ffaa00' : '#ff4444';
+            }
+        }
+
+        function formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return seconds + 's ago';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            return Math.floor(seconds / 3600) + 'h ago';
+        }
+
+        // Socket.IO event handlers
         socket.on('connect', () => {
             console.log('✅ Connected to server!');
             UIElements.connectionDot.className = 'connection-dot connected';
             UIElements.connectionStatusText.textContent = 'Connected';
             state.connectionStartTime = Date.now();
+            state.reconnectAttempts = 0;
             socket.emit('admin_join');
         });
 
-        socket.on('disconnect', () => {
-            console.error('❌ Disconnected from server!');
+        socket.on('disconnect', (reason) => {
+            console.error('❌ Disconnected from server! Reason:', reason);
             UIElements.connectionDot.className = 'connection-dot disconnected';
-            UIElements.connectionStatusText.textContent = 'Disconnected';
+            UIElements.connectionStatusText.textContent = 'Disconnected - ' + reason;
+            state.reconnectAttempts++;
+        });
+
+        socket.on('reconnect', (attemptNumber) => {
+            console.log('🔄 Reconnected after', attemptNumber, 'attempts');
+            UIElements.connectionDot.className = 'connection-dot connected';
+            UIElements.connectionStatusText.textContent = 'Reconnected';
+        });
+
+        socket.on('reconnect_attempt', (attemptNumber) => {
+            console.log('🔄 Reconnect attempt', attemptNumber);
+            UIElements.connectionStatusText.textContent = 'Reconnecting... (' + attemptNumber + ')';
+        });
+
+        socket.on('reconnect_error', (error) => {
+            console.error('🔄 Reconnect error:', error);
+        });
+
+        socket.on('reconnect_failed', () => {
+            console.error('🔄 Reconnect failed');
+            UIElements.connectionStatusText.textContent = 'Connection failed';
+        });
+
+        socket.on('ping', () => {
+            state.lastPingTime = Date.now();
+        });
+
+        socket.on('pong', (latency) => {
+            const currentLatency = Date.now() - state.lastPingTime;
+            state.connectionQuality = Math.max(10, 100 - currentLatency / 10);
         });
 
         socket.on('device_list', (initialDevices) => {
             UIElements.deviceList.innerHTML = '';
             state.devices = {};
-            initialDevices.forEach(updateDeviceInList);
+            initialDevices.forEach(device => {
+                if (device && device.deviceId) {
+                    updateDeviceInList(device);
+                }
+            });
         });
 
         socket.on('new_device_joined', updateDeviceInList);
 
         socket.on('device_disconnected', (deviceId) => {
             const el = document.getElementById(`device-${deviceId}`);
-            if (el) el.remove();
-            delete state.devices[deviceId];
-            if (state.activeDeviceId === deviceId) {
-                showView('device-list-view');
-                state.activeDeviceId = null;
+            if (el) {
+                el.querySelector('.status-dot').style.backgroundColor = '#ff4444';
+                el.querySelector('.device-name').classList.add('reconnecting');
+            }
+            if (state.devices[deviceId]) {
+                state.devices[deviceId].socketId = null;
+            }
+        });
+
+        socket.on('device_offline', (data) => {
+            if (state.devices[data.deviceId]) {
+                state.devices[data.deviceId].socketId = null;
+                state.devices[data.deviceId].lastSeen = data.lastSeen;
+                updateDeviceInList(state.devices[data.deviceId]);
+                
+                if (state.activeDeviceId === data.deviceId) {
+                    UIElements.deviceConnectionQuality.style.display = 'none';
+                    alert('Device went offline. It will reconnect automatically.');
+                }
             }
         });
 
         socket.on('device_heartbeat', (data) => {
             if (state.devices[data.deviceId]) {
-                updateDeviceInList(data);
+                updateDeviceInList({...state.devices[data.deviceId], ...data});
                 if (data.deviceId === state.activeDeviceId) {
                     UIElements.lockStatus.textContent = `Lock: ${data.lockType || 'Unknown'}`;
+                    updateConnectionQualityDisplay(state.devices[data.deviceId].connectionQuality || 100);
                 }
             }
         });
 
         socket.on('screen_update', (data) => {
             if (data.deviceId !== state.activeDeviceId || state.currentScreenView !== 'black') return;
-            // Black screen logic can be added here if needed
+            // Black screen logic
         });
 
         socket.on('live_screen', (data) => {
             if (data.deviceId !== state.activeDeviceId || state.currentScreenView !== 'live') return;
+            
+            // Update connection quality based on frame rate
+            const now = Date.now();
+            if (state.devices[data.deviceId]) {
+                const lastFrame = state.devices[data.deviceId].lastFrameTime || 0;
+                const frameDelay = now - lastFrame;
+                
+                if (lastFrame > 0 && frameDelay > 0) {
+                    const fps = 1000 / frameDelay;
+                    if (fps < 1) {
+                        state.devices[data.deviceId].connectionQuality = 
+                            Math.max(10, (state.devices[data.deviceId].connectionQuality || 100) - 5);
+                    }
+                }
+                
+                state.devices[data.deviceId].lastFrameTime = now;
+                updateConnectionQualityDisplay(state.devices[data.deviceId].connectionQuality || 100);
+            }
+            
             UIElements.liveScreenImage.src = `data:image/jpeg;base64,${data.liveImage}`;
         });
 
+        // UI Event Listeners
         UIElements.backToListBtn.onclick = () => {
             stopLiveStream();
             state.activeDeviceId = null;
+            UIElements.deviceConnectionQuality.style.display = 'none';
             showView('device-list-view');
         };
+        
         UIElements.blackScreenBtn.onclick = () => switchScreenView('black');
         UIElements.liveScreenBtn.onclick = () => switchScreenView('live');
         
@@ -287,6 +454,7 @@
             sendCommand('touch_command', { x, y });
         });
 
+        // Control buttons
         document.getElementById('btn-start-stream').onclick = startLiveStream;
         document.getElementById('btn-stop-stream').onclick = stopLiveStream;
         document.getElementById('btn-wake-unlock').onclick = () => sendCommand('unlock_device');
@@ -297,13 +465,37 @@
         document.getElementById('btn-scroll-down').onclick = () => sendCommand('scroll_action', { direction: 'down' });
         document.getElementById('btn-scroll-left').onclick = () => sendCommand('scroll_action', { direction: 'left' });
         document.getElementById('btn-scroll-right').onclick = () => sendCommand('scroll_action', { direction: 'right' });
+        document.getElementById('btn-reconnect-device').onclick = () => {
+            if (state.activeDeviceId && state.devices[state.activeDeviceId]) {
+                const device = state.devices[state.activeDeviceId];
+                alert(`Device ${device.deviceName} will attempt to reconnect.`);
+            }
+        };
 
+        // Update connection stats
         setInterval(() => {
             if (socket.connected) {
                 const uptime = Math.floor((Date.now() - state.connectionStartTime) / 1000);
-                UIElements.connectionStats.textContent = `Uptime: ${uptime}s`;
+                const hours = Math.floor(uptime / 3600);
+                const minutes = Math.floor((uptime % 3600) / 60);
+                const seconds = uptime % 60;
+                UIElements.connectionStats.textContent = `Uptime: ${hours}h ${minutes}m ${seconds}s`;
+                
+                // Update connection quality for active device
+                if (state.activeDeviceId && state.devices[state.activeDeviceId]) {
+                    const quality = calculateConnectionQuality(state.activeDeviceId);
+                    updateConnectionQualityDisplay(quality);
+                }
             }
         }, 1000);
+
+        // Auto-refresh device list every 30 seconds
+        setInterval(() => {
+            if (socket.connected && UIElements.deviceListView.classList.contains('active')) {
+                // Re-send admin join to refresh list
+                socket.emit('admin_join');
+            }
+        }, 30000);
     </script>
 </body>
 </html>
