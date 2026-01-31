@@ -25,6 +25,7 @@
         }
         .view.active { 
             display: flex; 
+            flex-direction: column;
         }
         
         /* Device List View */
@@ -34,21 +35,22 @@
         
         .header { 
             background-color: #1e1e1e; 
-            padding: 20px; 
+            padding: 15px 20px; 
             text-align: center; 
             border-bottom: 2px solid #00ff00; 
+            flex-shrink: 0;
         }
         
         .header h1 { 
             font-family: 'Orbitron', sans-serif; 
             margin: 0; 
-            font-size: 2.5em; 
+            font-size: 2em; 
             color: #00ff00; 
             text-shadow: 0 0 10px #00ff00; 
         }
         
         #device-list-container { 
-            padding: 30px; 
+            padding: 20px; 
             overflow-y: auto; 
             flex-grow: 1; 
         }
@@ -57,12 +59,14 @@
             list-style: none; 
             padding: 0; 
             margin: 0; 
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
         }
         
         .device { 
             background-color: #1e1e1e; 
-            margin-bottom: 15px; 
-            border-radius: 8px; 
+            border-radius: 10px; 
             border-left: 5px solid #555; 
             padding: 20px; 
             cursor: pointer; 
@@ -73,18 +77,18 @@
         }
         
         .device:hover { 
-            transform: translateY(-5px); 
+            transform: translateY(-3px); 
             box-shadow: 0 10px 20px rgba(0,0,0,0.2); 
             border-left-color: #00ff00; 
         }
         
         .device-name { 
-            font-size: 1.5em; 
+            font-size: 1.3em; 
             font-weight: 700; 
         }
         
         .device-info { 
-            font-size: 1em; 
+            font-size: 0.9em; 
             color: #aaa; 
         }
         
@@ -124,6 +128,7 @@
             border-bottom: 1px solid #333; 
             flex-wrap: wrap; 
             gap: 10px; 
+            flex-shrink: 0;
         }
         
         #back-to-list-btn { 
@@ -179,6 +184,8 @@
         .main-container { 
             display: flex; 
             flex-grow: 1; 
+            min-height: 0;
+            overflow: hidden;
         }
         
         .screen-area { 
@@ -188,15 +195,21 @@
             justify-content: center; 
             padding: 15px; 
             position: relative;
+            overflow: auto;
         }
         
         .screen-viewport {
-            border: 8px solid #444; 
-            border-radius: 20px; 
+            border: 3px solid #444; 
+            border-radius: 10px; 
             background-color: #000; 
             box-shadow: 0 0 20px rgba(0,0,0,0.5); 
             overflow: hidden; 
             position: relative;
+            max-width: 95%;
+            max-height: 95%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .screen-container {
@@ -204,6 +217,8 @@
             background-color: #000;
             transform-origin: top left;
             overflow: hidden;
+            max-width: 100%;
+            max-height: 100%;
         }
         
         .screen-element {
@@ -268,9 +283,11 @@
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center; 
+            justify-content: flex-start; 
             gap: 12px; 
-            padding: 10px; 
+            padding: 20px 10px;
+            flex-shrink: 0;
+            overflow-y: auto;
         }
         
         .control-button { 
@@ -286,6 +303,7 @@
             display: flex; 
             align-items: center; 
             justify-content: center; 
+            flex-shrink: 0;
         }
         
         .control-button:hover { 
@@ -304,21 +322,22 @@
             background: linear-gradient(135deg, #0066cc, #0099ff);
             color: white;
             border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.2em;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4);
             transition: all 0.3s;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
         
         .single-main-btn:hover {
             background: linear-gradient(135deg, #0099ff, #00ccff);
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 153, 255, 0.6);
         }
         
@@ -332,6 +351,7 @@
             align-items: center;
             gap: 5px;
             font-size: 0.9em;
+            flex-shrink: 0;
         }
         
         .live-indicator {
@@ -351,6 +371,82 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #2a2a2a;
+        }
+        
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .connection-dot.connected {
+            background-color: #44ff44;
+            box-shadow: 0 0 8px #44ff44;
+        }
+        
+        .connection-dot.disconnected {
+            background-color: #ff4444;
+            box-shadow: 0 0 8px #ff4444;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #00ff00;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* No Connection Message */
+        .no-connection {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 1001;
+            color: white;
+            border: 2px solid #ff4444;
+        }
+        
+        .reconnect-btn {
+            background: #0099ff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -358,7 +454,7 @@
     <div id="device-list-view" class="view active">
         <div class="header">
             <h1>🔓 LIVE SCREEN CONTROL v4.0</h1>
-            <p style="margin: 5px 0; color: #aaa;">Real-time Live Screen Streaming • Dual View Mode</p>
+            <p style="margin: 5px 0; color: #aaa;">Real-time Live Screen Streaming • Full Screen Mode</p>
         </div>
         <div id="device-list-container">
             <ul id="device-list"></ul>
@@ -386,12 +482,30 @@
                 <span id="stream-status">Live Stream: Off</span>
             </div>
             
+            <div class="connection-status">
+                <div id="connection-dot" class="connection-dot disconnected"></div>
+                <span id="connection-status-text">Disconnected</span>
+            </div>
+            
             <button id="btn-wake-unlock" class="single-main-btn">
                 ⚡ WAKE & UNLOCK
             </button>
         </div>
         <div class="main-container">
             <div class="screen-area">
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 10px;">Loading screen...</div>
+                </div>
+                
+                <!-- No Connection Message -->
+                <div id="no-connection" class="no-connection">
+                    <div>📡 Connection Lost</div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">Trying to reconnect...</div>
+                    <button id="reconnect-btn" class="reconnect-btn">Reconnect Now</button>
+                </div>
+                
                 <!-- Black Screen View (Default) -->
                 <div id="black-screen-viewport" class="screen-viewport" style="display: block;">
                     <div id="black-screen-container" class="screen-container"></div>
@@ -415,13 +529,23 @@
                 <div class="divider"></div>
                 <button class="control-button" id="btn-start-stream">▶️</button>
                 <button class="control-button" id="btn-stop-stream">⏸️</button>
+                <div class="divider"></div>
+                <button class="control-button" id="btn-fullscreen">⬛</button>
+                <button class="control-button" id="btn-fit-screen">📐</button>
             </div>
         </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 20000
+        });
+        
         const deviceListView = document.getElementById('device-list-view');
         const controlView = document.getElementById('control-view');
         const deviceListEl = document.getElementById('device-list');
@@ -436,8 +560,18 @@
         const btnLiveScreen = document.getElementById('btn-live-screen');
         const btnStartStream = document.getElementById('btn-start-stream');
         const btnStopStream = document.getElementById('btn-stop-stream');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const btnFitScreen = document.getElementById('btn-fit-screen');
         const liveIndicator = document.getElementById('live-indicator');
         const streamStatus = document.getElementById('stream-status');
+        const connectionDot = document.getElementById('connection-dot');
+        const connectionStatusText = document.getElementById('connection-status-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const noConnection = document.getElementById('no-connection');
+        const reconnectBtn = document.getElementById('reconnect-btn');
+        
+        const blackViewport = document.getElementById('black-screen-viewport');
+        const liveViewport = document.getElementById('live-screen-viewport');
 
         let devices = {};
         let activeDeviceId = null;
@@ -446,19 +580,87 @@
         let lastScreenData = null;
         let lastLiveImage = null;
         let screenScale = 1;
+        let isFullscreen = false;
+        let isConnectionStable = false;
+        let connectionRetries = 0;
+        const MAX_RETRIES = 10;
 
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
         }
 
-        socket.on('connect', () => socket.emit('admin_join'));
+        // Connection status management
+        function updateConnectionStatus(connected) {
+            isConnectionStable = connected;
+            if (connected) {
+                connectionDot.className = 'connection-dot connected';
+                connectionStatusText.textContent = 'Connected';
+                connectionStatusText.style.color = '#44ff44';
+                noConnection.style.display = 'none';
+                connectionRetries = 0;
+            } else {
+                connectionDot.className = 'connection-dot disconnected';
+                connectionStatusText.textContent = 'Disconnected';
+                connectionStatusText.style.color = '#ff4444';
+                if (activeDeviceId) {
+                    noConnection.style.display = 'block';
+                }
+            }
+        }
+
+        function showLoading(show) {
+            loadingSpinner.style.display = show ? 'block' : 'none';
+        }
+
+        socket.on('connect', () => {
+            console.log('✅ Connected to server');
+            updateConnectionStatus(true);
+            socket.emit('admin_join');
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.log('❌ Disconnected from server:', reason);
+            updateConnectionStatus(false);
+            
+            if (activeDeviceId && reason !== 'io client disconnect') {
+                connectionRetries++;
+                if (connectionRetries <= MAX_RETRIES) {
+                    console.log(`🔄 Attempting to reconnect (${connectionRetries}/${MAX_RETRIES})...`);
+                    setTimeout(() => {
+                        if (socket.disconnected) {
+                            socket.connect();
+                        }
+                    }, 2000);
+                }
+            }
+        });
+
+        socket.on('connect_error', (error) => {
+            console.log('🔌 Connection error:', error.message);
+            updateConnectionStatus(false);
+        });
+
+        socket.on('reconnect', (attemptNumber) => {
+            console.log(`✅ Reconnected after ${attemptNumber} attempts`);
+            updateConnectionStatus(true);
+            if (activeDeviceId) {
+                socket.emit('admin_join');
+            }
+        });
+
+        socket.on('reconnecting', (attemptNumber) => {
+            console.log(`🔄 Reconnecting (attempt ${attemptNumber})...`);
+        });
+
         socket.on('device_list', (initialDevices) => { 
             deviceListEl.innerHTML = ''; 
             devices = {}; 
             initialDevices.forEach(addDeviceToList); 
         });
+        
         socket.on('new_device_joined', addDeviceToList);
+        
         socket.on('device_disconnected', (deviceId) => {
             const el = document.getElementById(`device-${deviceId}`);
             if (el) el.remove();
@@ -502,13 +704,18 @@
                 activeDeviceId = device.deviceId;
                 deviceTitleEl.textContent = `${device.deviceName} - Live Control`;
                 lockStatusEl.textContent = `Lock: ${device.lockType || "none"}`;
-                blackScreenContainer.innerHTML = '📡 Receiving screen data...';
+                blackScreenContainer.innerHTML = '';
                 liveScreenImage.src = '';
                 liveClickableOverlay.innerHTML = '';
                 showView('control-view');
                 
-                // Start live stream automatically
-                startLiveStream();
+                // Show loading
+                showLoading(true);
+                
+                // Auto start live stream after a short delay
+                setTimeout(() => {
+                    startLiveStream();
+                }, 500);
             });
             deviceListEl.appendChild(li);
         }
@@ -522,21 +729,70 @@
             
             // Show/hide screen containers
             if (viewType === 'black') {
-                document.getElementById('black-screen-viewport').style.display = 'block';
-                document.getElementById('live-screen-viewport').style.display = 'none';
+                blackViewport.style.display = 'flex';
+                liveViewport.style.display = 'none';
             } else {
-                document.getElementById('black-screen-viewport').style.display = 'none';
-                document.getElementById('live-screen-viewport').style.display = 'block';
+                blackViewport.style.display = 'none';
+                liveViewport.style.display = 'flex';
                 
                 // If we have a live image, show it
                 if (lastLiveImage) {
                     liveScreenImage.src = 'data:image/jpeg;base64,' + lastLiveImage;
+                } else if (isLiveStreaming) {
+                    // Show loading if streaming but no image yet
+                    showLoading(true);
+                }
+            }
+            
+            // Adjust screen size
+            adjustScreenSize();
+        }
+
+        function adjustScreenSize() {
+            const viewport = currentScreenView === 'black' ? blackViewport : liveViewport;
+            const screenArea = document.querySelector('.screen-area');
+            
+            // Get available space
+            const availableWidth = screenArea.clientWidth - 40;
+            const availableHeight = screenArea.clientHeight - 40;
+            
+            // Calculate optimal size (90% of available space)
+            const targetWidth = Math.min(availableWidth * 0.9, 1200);
+            const targetHeight = Math.min(availableHeight * 0.9, 800);
+            
+            viewport.style.width = `${targetWidth}px`;
+            viewport.style.height = `${targetHeight}px`;
+            viewport.style.maxWidth = `${targetWidth}px`;
+            viewport.style.maxHeight = `${targetHeight}px`;
+            
+            // Update container scaling if we have screen data
+            if (lastScreenData) {
+                const remoteWidth = lastScreenData.screenWidth;
+                const remoteHeight = lastScreenData.screenHeight;
+                
+                // Calculate scale to fit viewport
+                const widthScale = targetWidth / remoteWidth;
+                const heightScale = targetHeight / remoteHeight;
+                screenScale = Math.min(widthScale, heightScale) * 0.95; // 95% to keep borders
+                
+                if (currentScreenView === 'black') {
+                    blackScreenContainer.style.transform = `scale(${screenScale})`;
+                    blackScreenContainer.style.transformOrigin = 'top left';
+                    blackScreenContainer.style.width = `${remoteWidth}px`;
+                    blackScreenContainer.style.height = `${remoteHeight}px`;
+                }
+                
+                // Update clickable overlay
+                if (lastScreenData.elements) {
+                    addClickableOverlay(lastScreenData.elements);
                 }
             }
         }
 
         function startLiveStream() {
             if (!activeDeviceId || isLiveStreaming) return;
+            
+            showLoading(true);
             
             socket.emit('command_to_device', {
                 deviceId: activeDeviceId,
@@ -549,11 +805,10 @@
             streamStatus.textContent = 'Live Stream: On';
             streamStatus.style.color = '#44ff44';
             
-            // Show loading indicator
-            if (currentScreenView === 'live') {
-                liveScreenImage.src = '';
-                liveScreenImage.style.backgroundColor = '#000';
-            }
+            // Hide loading after stream starts
+            setTimeout(() => {
+                showLoading(false);
+            }, 2000);
         }
 
         function stopLiveStream() {
@@ -575,23 +830,13 @@
             if (data.deviceId !== activeDeviceId) return;
             
             lastScreenData = data;
+            showLoading(false);
             
             window.requestAnimationFrame(() => {
                 // Clear containers
                 blackScreenContainer.innerHTML = '';
                 
                 const remoteWidth = data.screenWidth, remoteHeight = data.screenHeight;
-                const viewportHeight = 600;
-                screenScale = viewportHeight / remoteHeight;
-                
-                // Update viewport sizes for black screen
-                const blackViewport = document.getElementById('black-screen-viewport');
-                blackViewport.style.width = (remoteWidth * screenScale) + 'px';
-                blackViewport.style.height = viewportHeight + 'px';
-                
-                blackScreenContainer.style.width = remoteWidth + 'px';
-                blackScreenContainer.style.height = remoteHeight + 'px';
-                blackScreenContainer.style.transform = `scale(${screenScale})`;
                 
                 // Update lock status
                 if (data.lockType) {
@@ -650,10 +895,8 @@
                     blackScreenContainer.appendChild(el);
                 });
                 
-                // Update live screen viewport size
-                const liveViewport = document.getElementById('live-screen-viewport');
-                liveViewport.style.width = (remoteWidth * screenScale) + 'px';
-                liveViewport.style.height = viewportHeight + 'px';
+                // Adjust screen size
+                adjustScreenSize();
             });
         });
 
@@ -661,6 +904,7 @@
             if (data.deviceId !== activeDeviceId) return;
             
             lastLiveImage = data.liveImage;
+            showLoading(false);
             
             if (currentScreenView === 'live') {
                 // Update live screen image
@@ -735,6 +979,34 @@
         };
         btnStartStream.onclick = startLiveStream;
         btnStopStream.onclick = stopLiveStream;
+        
+        btnFullscreen.onclick = () => {
+            const viewport = currentScreenView === 'black' ? blackViewport : liveViewport;
+            const screenArea = document.querySelector('.screen-area');
+            
+            if (!isFullscreen) {
+                // Enter fullscreen
+                viewport.style.width = '95%';
+                viewport.style.height = '95%';
+                viewport.style.maxWidth = 'none';
+                viewport.style.maxHeight = 'none';
+                btnFullscreen.textContent = '⛶';
+                isFullscreen = true;
+            } else {
+                // Exit fullscreen
+                adjustScreenSize();
+                btnFullscreen.textContent = '⬛';
+                isFullscreen = false;
+            }
+        };
+        
+        btnFitScreen.onclick = adjustScreenSize;
+
+        reconnectBtn.onclick = () => {
+            if (socket.disconnected) {
+                socket.connect();
+            }
+        };
 
         backToListBtn.onclick = () => { 
             stopLiveStream();
@@ -808,6 +1080,16 @@
             }, 3000);
         };
 
+        // Resize handler
+        window.addEventListener('resize', adjustScreenSize);
+        
+        // Auto-adjust on view change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                setTimeout(adjustScreenSize, 100);
+            }
+        });
+
         // Heartbeat
         setInterval(() => { 
             if (socket.connected) socket.emit('heartbeat', {}); 
@@ -815,10 +1097,13 @@
         
         // Auto-start live stream when device is selected
         setInterval(() => {
-            if (activeDeviceId && currentScreenView === 'live' && !isLiveStreaming) {
+            if (activeDeviceId && currentScreenView === 'live' && !isLiveStreaming && isConnectionStable) {
                 startLiveStream();
             }
-        }, 1000);
+        }, 5000);
+        
+        // Initial connection status
+        updateConnectionStatus(socket.connected);
     </script>
 </body>
 </html>
